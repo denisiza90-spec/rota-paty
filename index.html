@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rota Paty</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+:root{font-family:Arial,sans-serif;color:#172033;background:#f3f6fb}
+*{box-sizing:border-box}body{margin:0;padding:16px;max-width:980px;margin-inline:auto}
+h1{margin:0 0 5px;font-size:27px}p{line-height:1.4}.muted{color:#5b6475;font-size:14px}
+.card{background:#fff;border:1px solid #e0e6ef;border-radius:14px;padding:16px;margin:14px 0;box-shadow:0 2px 8px #1720330a}
+label{display:block;font-weight:700;margin:8px 0}
+input,button{font:inherit;border-radius:9px;padding:12px;border:1px solid #cbd5e1}
+input{width:100%;background:#fff}button{background:#155eef;color:white;border:0;font-weight:700;cursor:pointer}
+button.secondary{background:#e8eef8;color:#172033}button:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:8px;align-items:center}.row>*{min-width:0}.row input{flex:1}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:#edf4ff;padding:12px;border-radius:10px}.stat strong{display:block;font-size:24px}
+#message{margin-top:8px;font-weight:700}.good{color:#087443}.bad{color:#b42318}
+#current{background:#f8fafc;border:1px solid #dce4ef;border-radius:12px;padding:14px;margin-top:12px}
+.address{font-size:18px;font-weight:700;line-height:1.45}.detail{margin-top:7px;color:#475467}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:9px;border-bottom:1px solid #e5eaf1;vertical-align:top}th{background:#f8fafc}
+.tablewrap{overflow:auto} .num{width:92px;padding:8px}
+@media(max-width:600px){body{padding:10px}.row{flex-wrap:wrap}.row button{width:100%}.stats{grid-template-columns:1fr 1fr}.stats .stat:last-child{grid-column:span 2}th,td{padding:7px}.address{font-size:16px}}
+</style>
+</head>
+<body>
+<h1>Rota Paty</h1>
+<p class="muted">Importe sua planilha, bipe os pacotes, numere na ordem desejada e exporte a lista.</p>
+
+<section class="card">
+<h2>1. Importar planilha</h2>
+<label for="file">Selecione o arquivo Excel (.xlsx ou .xls) ou CSV</label>
+<input id="file" type="file" accept=".xlsx,.xls,.csv">
+<div id="importMsg" class="muted">A planilha precisa conter o código/número do pedido e as colunas de endereço.</div>
+</section>
+
+<section class="card">
+<h2>2. Bipe ou pesquise um pacote</h2>
+<p class="muted">Clique no campo e use o leitor de código de barras. Também pode digitar o código e apertar Enter.</p>
+<div class="row">
+<input id="barcode" placeholder="Bipe com leitor USB/Bluetooth ou use a câmera" autocomplete="off">
+<button id="findBtn">Localizar</button>
+</div>
+<div class="row" style="margin-top:8px">
+<button id="startScan">Escanear com a câmera</button>
+<button id="stopScan" class="secondary" disabled>Parar câmera</button>
+</div>
+<div id="scanner" style="display:none;margin-top:12px;max-width:480px"></div>
+<div id="message" aria-live="polite"></div>
+<div id="current" hidden>
+<div class="muted">Endereço do pacote encontrado</div>
+<div id="currentName" class="address"></div>
+<div id="currentAddress" class="address"></div>
+<div id="currentDetails" class="detail"></div>
+<div class="row" style="margin-top:12px">
+<label for="manualNumber" style="margin:0;align-self:center">Número da rota</label>
+<input id="manualNumber" type="number" min="1" step="1" class="num" placeholder="Nº">
+<button id="saveNumber">Salvar número</button>
+</div>
+<p class="muted">O número é manual. Você escolhe a ordem de cada pacote.</p>
+</div>
+</section>
+
+<section class="card">
+<h2>3. Pacotes numerados</h2>
+<div class="stats">
+<div class="stat"><strong id="total">0</strong><span>Pacotes importados</span></div>
+<div class="stat"><strong id="numbered">0</strong><span>Pacotes numerados</span></div>
+<div class="stat"><strong id="pending">0</strong><span>Sem número</span></div>
+</div>
+<div class="row" style="margin:12px 0">
+<input id="filter" placeholder="Filtrar por código, nome ou endereço">
+<button id="exportBtn">Baixar CSV para Circuit</button>
+</div>
+<p class="muted">A exportação sai na ordem dos números que você definiu. Pacotes sem número ficam no final.</p>
+<div class="tablewrap">
+<table>
+<thead><tr><th>Nº</th><th>Código/pedido</th><th>Destinatário</th><th>Endereço</th><th>Ação</th></tr></thead>
+<tbody id="rows"><tr><td colspan="5">Importe a planilha para começar.</td></tr></tbody>
+</table>
+</div>
+</section>
+<script>
+const $ = id => document.getElementById(id);
+let packages = [], selectedId = null, columns = {};
+function norm(v){return String(v ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");}
+function findCol(headers, aliases){
+  const normalized = headers.map(h=>({raw:h,n:norm(h)}));
+  for(const a of aliases){const hit=normalized.find(h=>h.n===norm(a));if(hit)return hit.raw;}
+  for(const a of aliases){const aa=norm(a);const hit=normalized.find(h=>h.n.includes(aa));if(hit)return hit.raw;}
+  return "";
+}
+function get(row,key){const c=columns[key];return c ? String(row[c] ?? "").trim() : "";}
+function makeAddress(row){
+  const parts=[];
+  const street=get(row,"address");
+  const number=get(row,"number");
+  const complement=get(row,"complement");
+  const district=get(row,"district");
+  const city=get(row,"city");
+  const state=get(row,"state");
+  const cep=get(row,"cep");
+  if(street)parts.push(number && !street.match(new RegExp("\\b"+number.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\b")) ? street+", "+number : street);
+  else if(number)parts.push("Nº "+number);
+  if(complement)parts.push(complement);
+  if(district)parts.push(district);
+  if(city)parts.push(city+(state?"/"+state:""));
+  else if(state)parts.push(state);
+  if(cep)parts.push("CEP "+cep);
+  return parts.join(" - ");
+}
+function setMessage(text,good=false){$("message").textContent=text;$("message").className=good?"good":"bad";}
+function render(){
+  $("total").textContent=packages.length;
+  $("numbered").textContent=packages.filter(p=>Number.isInteger(p.routeNo)&&p.routeNo>0).length;
+  $("pending").textContent=packages.filter(p=>!(Number.isInteger(p.routeNo)&&p.routeNo>0)).length;
+  const q=norm($("filter").value);
+  const shown=[...packages].sort((a,b)=>{
+    const an=Number.isInteger(a.routeNo)&&a.routeNo>0?a.routeNo:Infinity;
+    const bn=Number.isInteger(b.routeNo)&&b.routeNo>0?b.routeNo:Infinity;
+    return an-bn || a.index-b.index;
+  }).filter(p=>!q||norm([p.code,p.name,p.address,p.rawAddress].join(" ")).includes(q));
+  $("rows").innerHTML="";
+  if(!shown.length){$("rows").innerHTML='<tr><td colspan="5">Nenhum pacote encontrado.</td></tr>';return;}
+  for(const p of shown){
+    const tr=document.createElement("tr");
+    const td=(value)=>{const e=document.createElement("td");e.textContent=value||"—";return e;};
+    tr.append(td(p.routeNo||"—"),td(p.code),td(p.name),td(p.address||p.rawAddress));
+    const action=td("");
+    const b=document.createElement("button");b.className="secondary";b.textContent="Abrir";
+    b.addEventListener("click",()=>showPackage(p.id));action.appendChild(b);tr.appendChild(action);
+    $("rows").appendChild(tr);
+  }
+}
+function showPackage(id){
+  const p=packages.find(x=>x.id===id);if(!p)return;
+  selectedId=id;$("current").hidden=false;
+  $("currentName").textContent=p.name||"Destinatário não identificado";
+  $("currentAddress").textContent=p.address||p.rawAddress||"Endereço não encontrado nas colunas reconhecidas.";
+  $("currentDetails").textContent="Código/pedido: "+p.code+(p.cep?" | CEP: "+p.cep:"");
+  $("manualNumber").value=p.routeNo||"";
+  $("barcode").value=p.code;
+  setMessage("Pacote localizado.",true);
+}
+function searchPackage(){
+  const q=$("barcode").value.trim();if(!q){setMessage("Digite ou bipe o código do pacote.");return;}
+  const nq=norm(q);
+  let p=packages.find(x=>norm(x.code)===nq);
+  if(!p)p=packages.find(x=>norm(x.code).includes(nq)||nq.includes(norm(x.code)));
+  if(!p){setMessage("Pacote não encontrado na planilha. Confira o código lido.");$("current").hidden=true;return;}
+  showPackage(p.id);
+}
+$("file").addEventListener("change",async e=>{
+  const file=e.target.files[0];if(!file)return;
+  try{
+    let data;
+    if(file.name.toLowerCase().endsWith(".csv")){
+      const text=await file.text();const wb=XLSX.read(text,{type:"string"});const sn=wb.SheetNames[0];data=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:""});
+    }else{
+      const buf=await file.arrayBuffer();const wb=XLSX.read(buf,{type:"array"});const sn=wb.SheetNames[0];data=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:""});
+    }
+    if(!data.length){$("importMsg").textContent="A planilha está vazia ou não foi possível ler os dados.";return;}
+    const headers=Object.keys(data[0]);
+    columns={
+      code:findCol(headers,["numero de pedido jms","numero do pedido jms","numero de pedido","pedido","order id","codigo de barras","barcode","codigo","rastreamento","tracking"]),
+      name:findCol(headers,["destinatario","nome do destinatario","cliente","nome","consignee","recipient"]),
+      address:findCol(headers,["endereco","logradouro","rua","address","endereco de entrega"]),
+      number:findCol(headers,["numero","numero da casa","numero do endereco","nº","num"]),
+      complement:findCol(headers,["complemento","apartamento","apto","unidade","complement"]),
+      district:findCol(headers,["bairro","distrito","district","neighborhood"]),
+      city:findCol(headers,["cidade","municipio","city"]),
+      state:findCol(headers,["uf","estado","state"]),
+      cep:findCol(headers,["cep","codigo postal","postal code","zip"])
+    };
+    if(!columns.code){
+      $("importMsg").textContent="Não encontrei a coluna de pedido/código. Cabeçalhos encontrados: "+headers.join(", ");
+      return;
+    }
+    packages=data.map((row,i)=>{
+      const rawAddress=makeAddress(row);
+      const code=String(row[columns.code]??"").trim();
+      return {id:"p"+i,index:i,raw:row,code,name:columns.name?String(row[columns.name]??"").trim():"",address:rawAddress,rawAddress,cep:columns.cep?String(row[columns.cep]??"").trim():"",routeNo:null};
+    }).filter(p=>p.code);
+    selectedId=null;$("current").hidden=true;
+    $("importMsg").textContent=`Importação concluída: ${packages.length} pacotes da aba "${file.name}". Colunas identificadas: ${headers.join(", ")}.`;
+    render();$("barcode").focus();
+  }catch(err){$("importMsg").textContent="Erro ao ler a planilha: "+err.message;}
+});
+$("findBtn").addEventListener("click",searchPackage);
+$("barcode").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();searchPackage();}});
+let qrScanner=null;
+$("startScan").addEventListener("click",async()=>{
+  if(!packages.length){setMessage("Importe a planilha antes de escanear.");return;}
+  if(!window.Html5Qrcode){setMessage("Não foi possível carregar o leitor de câmera. Confira a conexão com a internet.");return;}
+  $("scanner").style.display="block";$("startScan").disabled=true;$("stopScan").disabled=false;
+  try{
+    qrScanner=new Html5Qrcode("scanner");
+    const cameras=await Html5Qrcode.getCameras();
+    if(!cameras.length)throw new Error("Nenhuma câmera encontrada.");
+    const camera=cameras.find(c=>/back|rear|environment|traseira/i.test(c.label))||cameras[cameras.length-1];
+    await qrScanner.start(camera.id,{fps:10,qrbox:{width:280,height:140},aspectRatio:1.777},
+      decodedText=>{
+        $("barcode").value=decodedText;
+        searchPackage();
+        stopCamera();
+      },()=>{});
+    setMessage("Câmera ligada. Aponte para o código de barras.",true);
+  }catch(err){
+    setMessage("Não consegui abrir a câmera: "+err.message+". No celular, abra o aplicativo por uma página HTTPS ou permita o acesso à câmera.");
+    $("startScan").disabled=false;$("stopScan").disabled=true;
+    if(qrScanner){try{await qrScanner.clear();}catch(e){} qrScanner=null;}
+  }
+});
+async function stopCamera(){
+  if(qrScanner){try{await qrScanner.stop();}catch(e){}try{await qrScanner.clear();}catch(e){}qrScanner=null;}
+  $("scanner").style.display="none";$("startScan").disabled=false;$("stopScan").disabled=true;
+}
+$("stopScan").addEventListener("click",stopCamera);
+$("saveNumber").addEventListener("click",()=>{
+  const p=packages.find(x=>x.id===selectedId);if(!p){setMessage("Primeiro bipe ou abra um pacote.");return;}
+  const n=Number($("manualNumber").value);
+  if(!Number.isInteger(n)||n<1){setMessage("Digite um número inteiro maior que zero.");return;}
+  const duplicate=packages.find(x=>x.id!==p.id&&x.routeNo===n);
+  if(duplicate&&!confirm("O número "+n+" já está no pacote "+duplicate.code+". Deseja usar o mesmo número?"))return;
+  p.routeNo=n;render();setMessage("Pacote "+p.code+" salvo com o número "+n+".",true);$("barcode").focus();
+});
+$("filter").addEventListener("input",render);
+$("exportBtn").addEventListener("click",()=>{
+  if(!packages.length){alert("Importe uma planilha primeiro.");return;}
+  const sorted=[...packages].sort((a,b)=>{
+    const an=Number.isInteger(a.routeNo)&&a.routeNo>0?a.routeNo:Infinity;
+    const bn=Number.isInteger(b.routeNo)&&b.routeNo>0?b.routeNo:Infinity;
+    return an-bn||a.index-b.index;
+  });
+  const rows=[["Order","Name","Address","Stop Number","Postal Code","Order ID"]];
+  for(const p of sorted){
+    rows.push([p.name||p.code,p.name,p.address||p.rawAddress,p.routeNo||"",p.cep,p.code]);
+  }
+  const csv=rows.map(row=>row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="rota-paty-para-circuit.csv";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+});
+render();
+</script>
+</body>
+</html>
