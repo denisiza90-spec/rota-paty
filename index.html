@@ -163,7 +163,7 @@ function showPackage(id){
   $("currentAddress").textContent=p.address||p.rawAddress||"Endereço não encontrado nas colunas reconhecidas.";
   $("currentDetails").textContent="Código/pedido: "+p.code+(p.cep?" | CEP: "+p.cep:"");
   $("manualNumber").value=p.routeNo||"";
-  $("barcode").value=p.code;
+    
   setMessage("Pacote localizado.",true);
 }
 function searchPackage(){
