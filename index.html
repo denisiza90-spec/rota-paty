@@ -85,6 +85,28 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 <script>
 const $ = id => document.getElementById(id);
 let packages = [], selectedId = null, columns = {};
+  const STORAGE_KEY = "rotaPatyDados";
+function salvarDados() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      packages,
+      columns
+    }));
+  } catch (e) {
+    console.error("Erro ao salvar dados:", e);
+  }
+}
+function carregarDados() {
+  try {
+    const dados = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+    if (dados) {
+      packages = dados.packages || [];
+      columns = dados.columns || {};
+    }
+  } catch (e) {
+    console.error("Erro ao carregar dados:", e);
+  }
+}
 function norm(v){return String(v ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");}
 function findCol(headers, aliases){
   const normalized = headers.map(h=>({raw:h,n:norm(h)}));
@@ -183,6 +205,7 @@ $("file").addEventListener("change",async e=>{
       const code=String(row[columns.code]??"").trim();
       return {id:"p"+i,index:i,raw:row,code,name:columns.name?String(row[columns.name]??"").trim():"",address:rawAddress,rawAddress,cep:columns.cep?String(row[columns.cep]??"").trim():"",routeNo:null};
     }).filter(p=>p.code);
+    salvarDados();
     selectedId=null;$("current").hidden=true;
     $("importMsg").textContent=`Importação concluída: ${packages.length} pacotes da aba "${file.name}". Colunas identificadas: ${headers.join(", ")}.`;
     render();$("barcode").focus();
@@ -224,7 +247,7 @@ $("saveNumber").addEventListener("click",()=>{
   if(!Number.isInteger(n)||n<1){setMessage("Digite um número inteiro maior que zero.");return;}
   const duplicate=packages.find(x=>x.id!==p.id&&x.routeNo===n);
   if(duplicate&&!confirm("O número "+n+" já está no pacote "+duplicate.code+". Deseja usar o mesmo número?"))return;
-  p.routeNo=n;render();setMessage("Pacote "+p.code+" salvo com o número "+n+".",true);$("barcode").focus();
+  p.routeNo=n;salvarDados();render();setMessage("Pacote "+p.code+" salvo com o número "+n+".",true);$("barcode").focus();
 });
 $("filter").addEventListener("input",render);
 $("exportBtn").addEventListener("click",()=>{
@@ -242,6 +265,8 @@ $("exportBtn").addEventListener("click",()=>{
   const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});
   const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="rota-paty-para-circuit.csv";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
 });
+render();
+  carregarDados();
 render();
 </script>
 </body>
