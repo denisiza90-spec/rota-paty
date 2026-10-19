@@ -158,7 +158,7 @@ function render(){
 }
 function showPackage(id){
   const p=packages.find(x=>x.id===id);if(!p)return;
-  selectedId=id;$("current").hidden=false;
+  selectedId=id;$("#current").hidden=false;$("#current").scrollIntoView({behavior:"smooth",block:"start"});
   $("currentName").textContent=p.name||"Destinatário não identificado";
   $("currentAddress").textContent=p.address||p.rawAddress||"Endereço não encontrado nas colunas reconhecidas.";
   $("currentDetails").textContent="Código/pedido: "+p.code+(p.cep?" | CEP: "+p.cep:"");
