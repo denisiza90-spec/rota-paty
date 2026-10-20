@@ -25,7 +25,7 @@ th,td{text-align:left;padding:10px;border-bottom:1px solid #e2e8f0;vertical-alig
 #scanner video{border-radius:8px;display:block;width:100%;object-fit:cover}
 .scan-workspace{position:relative;width:100%;max-width:720px;margin:12px auto 0}
 #visorPacote{background:#0f172a;color:white;border-radius:14px;padding:18px;margin:12px 0;text-align:center}
-#visorPacote strong{display:block;font-size:34px;letter-spacing:.5px}#visorPacote span{display:block;color:#cbd5e1;margin-top:5px}
+#visorPacote strong{display:block;font-size:16px;letter-spacing:.3px;color:#bfdbfe;margin-top:10px}#visorPacote span{display:block;color:#fff;margin-top:0;font-size:22px;font-weight:800;line-height:1.25;overflow-wrap:anywhere;background:#1e293b;border:2px solid #38bdf8;border-radius:10px;padding:14px 10px}
 #exportarScanner{width:100%;margin-top:10px;background:#0f766e;font-weight:bold}
 #scannerLista{margin-top:14px;background:white;border:1px solid #dbe3ed;border-radius:10px;overflow:hidden}
 #scannerLista h3{font-size:16px;margin:0;padding:12px;background:#f1f5f9}
@@ -123,7 +123,7 @@ function chaveEndereco(p){
  const blocos=(comp.match(/\b(bloco|torre|bl)\s*[a-z0-9-]+\b/g)||[]).join(' ');
  const cidade=normalizar(valor(p,'cidade')),bairro=normalizar(valor(p,'distrito'));
  const base=[rua,blocos,bairro,cidade].filter(Boolean).join('|');
- return rua&&(bairro||cidade)?base:'';
+ return rua?base:'';
 }
 function agruparParadas(lista){
  const grupos=new Map();
@@ -145,7 +145,7 @@ function atualizarListaScanner(){
   const pacotes=document.createElement('div');pacotes.className='order-address';pacotes.style.marginTop='6px';
   [...grupo].sort((a,b)=>Number(a.numeroPacote)-Number(b.numeroPacote)).forEach((p,j)=>{
    if(j)pacotes.appendChild(document.createTextNode(' · '));
-   const item=document.createElement('span');item.style.fontWeight='bold';item.style.color=p.status==='Conferido'?'#15803d':'#1d4ed8';item.textContent='Pacote '+p.numeroPacote+(p.status==='Conferido'?' ✓':' □');pacotes.appendChild(item);
+   const item=document.createElement('span');item.style.fontWeight='bold';item.style.color=p.status==='Conferido'?'#15803d':'#1d4ed8';item.textContent=String(p.numeroPacote)+(p.status==='Conferido'?' ✓':' □');pacotes.appendChild(item);
   });
   const resumo=document.createElement('div');resumo.className='order-address';resumo.style.marginTop='5px';resumo.textContent=grupo.length+' pacote(s) · 1 parada';
   info.append(title,pacotes,resumo);row.append(check,info);box.appendChild(row);
@@ -159,7 +159,7 @@ function conferir(c,origem='manual'){
  if(!p){resultado('Código não encontrado na planilha: '+c,true);$('codigo').value='';processando=false;if(origem!=='camera')$('codigo').focus();return;}
  const ja=p.status==='Conferido';p.status='Conferido';if(!p.numeroPacote)p.numeroPacote=proximoNumeroPacote();
  salvarEstado();atualizar();$('filtro').value='';$('filtroStatus').value='';$('filtroMotorista').value='';
- const {mapa}=mapaParadas();$('numeroVisor').textContent='PACOTE '+p.numeroPacote;$('textoVisor').textContent=(endereco(p)||'Endereço não informado');
+ const {mapa}=mapaParadas();$('textoVisor').textContent=(endereco(p)||'ENDEREÇO NÃO INFORMADO');$('numeroVisor').textContent='PACOTE '+p.numeroPacote;
  resultado((ja?'Pacote já conferido':'Pacote conferido')+' — PACOTE '+p.numeroPacote+' | Pedido: '+p.codigo+' | Parada '+(mapa.get(String(p.id))||'—'));
  tocarBip();$('codigo').value='';if(origem!=='camera')$('codigo').focus();processando=false;
 }
