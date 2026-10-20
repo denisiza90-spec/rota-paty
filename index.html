@@ -41,11 +41,11 @@ th{background:#f8fafc}
 #exportarScanner{width:100%;margin-top:8px;background:#0f766e;font-weight:bold}
 #scannerLista{margin-top:12px;background:white;border:1px solid #dbe3ed;border-radius:10px;overflow:hidden}
 #scannerLista h3{font-size:16px;margin:0;padding:12px;background:#f1f5f9}
-.scan-order{display:grid;grid-template-columns:26px 1fr;gap:8px;padding:10px 12px;border-top:1px solid #e2e8f0}
+.scan-order{display:grid;grid-template-columns:26px 1fr;gap:8px;padding:12px;border-top:1px solid #e2e8f0}
 .check{font-size:22px;color:#0f9f6e;font-weight:bold}
 .check.pending{color:#94a3b8}
 .order-title{font-weight:bold;overflow-wrap:anywhere}
-.order-address{font-size:13px;color:#475569;margin-top:4px;overflow-wrap:anywhere}
+.order-address{font-size:14px;color:#166534;margin-top:6px;font-weight:bold;overflow-wrap:anywhere}
 .route-number{background:#dbeafe;color:#1d4ed8;font-weight:bold;padding:4px 8px;border-radius:6px}
 @media(max-width:600px){
  main{padding:8px}.card{padding:12px}
@@ -109,7 +109,7 @@ body.camera-mode header div{font-size:12px}
 <h3>Pacotes e endereços</h3>
 <div id="scannerListaItens">Importe a planilha para começar.</div>
 </div>
-<p class="small">✓ verde significa pacote conferido. O número do pacote é sequencial.</p>
+<p class="small">✓ verde significa pacote conferido. Os números dos pacotes são sequenciais.</p>
 </section>
 
 <section class="card">
@@ -271,12 +271,28 @@ function chaveEndereco(p){
 
 function agruparParadas(lista){
  const grupos=new Map();
+
  for(const p of lista){
   const k=chaveEndereco(p)||('pedido-individual:'+p.codigo);
   if(!grupos.has(k))grupos.set(k,[]);
   grupos.get(k).push(p);
  }
+
  return [...grupos.values()];
+}
+
+function numerosPacotes(grupo){
+ return grupo
+  .map(p=>Number(p.numeroPacote)||0)
+  .filter(n=>n>0)
+  .sort((a,b)=>a-b);
+}
+
+function textoPacotes(grupo){
+ const numeros=numerosPacotes(grupo);
+ return numeros.length
+  ?'Pacotes: '+numeros.join(', ')
+  :'Nenhum pacote bipado';
 }
 
 function limparCodigo(c){
@@ -290,7 +306,6 @@ function acharPedido(c){
  let p=pedidos.find(p=>normalizar(limparCodigo(p.codigo))===c);
  if(p)return p;
 
- // Correspondência parcial apenas se for única.
  const encontrados=pedidos.filter(p=>{
   const cod=normalizar(limparCodigo(p.codigo));
   return cod && (cod.includes(c)||c.includes(cod));
@@ -319,6 +334,7 @@ function tocarBip(){
  }catch(e){}
 }
 
+/* LISTA: ENDEREÇO PRIMEIRO, PACOTES ABAIXO */
 function atualizarListaScanner(){
  const box=$('scannerListaItens');
  box.innerHTML='';
@@ -333,18 +349,20 @@ function atualizarListaScanner(){
   row.className='scan-order';
 
   const completo=grupo.every(p=>p.status==='Conferido');
+
   const check=document.createElement('span');
   check.className='check '+(completo?'':'pending');
   check.textContent=completo?'✓':'□';
 
   const info=document.createElement('div');
+
   const title=document.createElement('div');
   title.className='order-title';
-  title.textContent=grupo.map(p=>'Pacote '+(p.numeroPacote||'—')).join(', ');
+  title.textContent=endereco(grupo[0])||'Endereço não informado';
 
   const address=document.createElement('div');
   address.className='order-address';
-  address.textContent=endereco(grupo[0])||'Endereço não informado';
+  address.textContent=textoPacotes(grupo);
 
   info.append(title,address);
   row.append(check,info);
@@ -401,8 +419,16 @@ function conferir(c,origem='manual'){
  $('numeroVisor').textContent='PACOTE '+p.numeroPacote;
  $('textoVisor').textContent=endereco(p)||'Endereço não informado';
 
- resultado((ja?'Pacote já conferido':'Pacote conferido')+
-  ' — PACOTE '+p.numeroPacote+' | '+(endereco(p)||'Endereço não informado'));
+ const grupo=agruparParadas(pedidos).find(g=>
+  g.some(item=>String(item.id)===String(p.id))
+ )||[p];
+
+ resultado(
+  (ja?'Pacote já conferido':'Pacote conferido')+
+  ' — PACOTE '+p.numeroPacote+
+  ' | '+textoPacotes(grupo)+
+  ' | '+(endereco(p)||'Endereço não informado')
+ );
 
  tocarBip();
  $('codigo').value='';
@@ -411,7 +437,7 @@ function conferir(c,origem='manual'){
  processando=false;
 }
 
-// Importação de Excel e CSV
+// IMPORTAÇÃO DE EXCEL E CSV
 $('arquivo').addEventListener('change',async e=>{
  const f=e.target.files[0];
  if(!f)return;
@@ -493,7 +519,7 @@ $('codigo').addEventListener('keydown',e=>{
  }
 });
 
-// Inicialização da câmera
+// CÂMERA
 $('iniciarCamera').addEventListener('click',async()=>{
  if(!pedidos.length){
   resultado('Importe a planilha antes de abrir o scanner.',true);
@@ -590,6 +616,7 @@ async function pararScanner(){
 
 $('pararCamera').addEventListener('click',pararScanner);
 
+// ATUALIZAR TELA
 function atualizar(){
  $('total').textContent=pedidos.length;
  $('lidos').textContent=pedidos.filter(p=>p.status==='Conferido').length;
@@ -710,7 +737,7 @@ $('todos').addEventListener('change',()=>{
  $(id).addEventListener(id==='filtro'?'input':'change',atualizar);
 });
 
-// Exportação para o Circuit
+// EXPORTAÇÃO PARA O CIRCUIT
 function exportarCircuito(){
  const conferidos=pedidos.filter(p=>p.status==='Conferido');
 
@@ -721,22 +748,29 @@ function exportarCircuito(){
 
  const grupos=agruparParadas(conferidos);
  const paradaPorId=new Map();
+ const grupoPorId=new Map();
 
  grupos.forEach((grupo,i)=>{
-  grupo.forEach(p=>paradaPorId.set(String(p.id),i+1));
+  grupo.forEach(p=>{
+   paradaPorId.set(String(p.id),i+1);
+   grupoPorId.set(String(p.id),grupo);
+  });
  });
 
  const linhas=[['Order ID','Name','Address','Postal Code','Stop Number','Notes']];
 
  conferidos.forEach(p=>{
-  const numero=p.numeroPacote||'';
+  const grupo=grupoPorId.get(String(p.id))||[p];
+  const enderecoEntrega=endereco(p);
+  const pacotesDoEndereco=textoPacotes(grupo);
+
   linhas.push([
    p.codigo,
-   'Pacote '+numero,
-   endereco(p),
+   enderecoEntrega,
+   enderecoEntrega,
    valor(p,'cep'),
    paradaPorId.get(String(p.id))||'',
-   'Pacote '+numero
+   pacotesDoEndereco
   ]);
  });
 
@@ -758,7 +792,8 @@ function exportarCircuito(){
  setTimeout(()=>URL.revokeObjectURL(url),2000);
 
  resultado('Arquivo gerado com '+conferidos.length+
-  ' pacote(s), agrupados em '+grupos.length+' parada(s).');
+  ' pacote(s), agrupados em '+grupos.length+
+  ' parada(s). Os números dos pacotes foram incluídos nas observações.');
 }
 
 $('exportarScanner').addEventListener('click',exportarCircuito);
