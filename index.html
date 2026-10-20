@@ -265,6 +265,32 @@ $("exportBtn").addEventListener("click",()=>{
     return an-bn||a.index-b.index;
   });
   const rows=[["Order","Name","Address","Stop Number","Postal Code","Order ID"]];
+const predios=new Map();
+
+for(const p of sorted){
+  const endereco=String(p.address||p.rawAddress||"").trim();
+  const partes=endereco.split(",");
+  const rua=partes.slice(0,2).join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\b(apto|apartamento|ap|bloco|torre|unidade|sala|casa)\b.*$/i,"").replace(/\s+/g," ").trim();
+  const chave=rua+"|"+String(p.city||"").toLowerCase()+"|"+String(p.cep||"").replace(/\D/g,"");
+  const numeroPredio=String(endereco.match(/\b\d+[A-Za-z]?\b/)||[""])[0];
+
+  const chaveFinal=chave+"|"+numeroPredio;
+
+  if(predios.has(chaveFinal)){
+    const grupo=predios.get(chaveFinal);
+    grupo.orders.push(p);
+    continue;
+  }
+
+  const grupo={orders:[p],stop:p.routeNo||""};
+  predios.set(chaveFinal,grupo);
+}
+
+for(const grupo of predios.values()){
+  for(const p of grupo.orders){
+    rows.push([p.name||p.code,p.name,p.address||p.rawAddress,grupo.stop,p.cep,p.code]);
+  }
+}
   for(const p of sorted){
     rows.push([p.name||p.code,p.name,p.address||p.rawAddress,p.routeNo||"",p.cep,p.code]);
   }
