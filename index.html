@@ -1,306 +1,240 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rota Paty</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
 <style>
-:root{font-family:Arial,sans-serif;color:#172033;background:#f3f6fb}
-*{box-sizing:border-box}body{margin:0;padding:16px;max-width:980px;margin-inline:auto}
-h1{margin:0 0 5px;font-size:27px}p{line-height:1.4}.muted{color:#5b6475;font-size:14px}
-.card{background:#fff;border:1px solid #e0e6ef;border-radius:14px;padding:16px;margin:14px 0;box-shadow:0 2px 8px #1720330a}
-label{display:block;font-weight:700;margin:8px 0}
-input,button{font:inherit;border-radius:9px;padding:12px;border:1px solid #cbd5e1}
-input{width:100%;background:#fff}button{background:#155eef;color:white;border:0;font-weight:700;cursor:pointer}
-button.secondary{background:#e8eef8;color:#172033}button:disabled{opacity:.45;cursor:not-allowed}
-.row{display:flex;gap:8px;align-items:center}.row>*{min-width:0}.row input{flex:1}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:#edf4ff;padding:12px;border-radius:10px}.stat strong{display:block;font-size:24px}
-#message{margin-top:8px;font-weight:700}.good{color:#087443}.bad{color:#b42318}
-#current{background:#f8fafc;border:1px solid #dce4ef;border-radius:12px;padding:14px;margin-top:12px}
-.address{font-size:18px;font-weight:700;line-height:1.45}.detail{margin-top:7px;color:#475467}
-table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:9px;border-bottom:1px solid #e5eaf1;vertical-align:top}th{background:#f8fafc}
-.tablewrap{overflow:auto} .num{width:92px;padding:8px}
-@media(max-width:600px){body{padding:10px}.row{flex-wrap:wrap}.row button{width:100%}.stats{grid-template-columns:1fr 1fr}.stats .stat:last-child{grid-column:span 2}th,td{padding:7px}.address{font-size:16px}}
+:root{font-family:Arial,sans-serif;color:#172033;background:#f1f5f9}
+*{box-sizing:border-box}body{margin:0}
+header{background:#123b70;color:white;padding:22px}header h1{margin:0 0 6px}
+main{max-width:1100px;margin:auto;padding:18px}
+.card{background:white;padding:20px;margin-bottom:16px;border-radius:12px;box-shadow:0 2px 8px #0001}
+h2{font-size:19px;margin-top:0}
+input,select{padding:11px;border:1px solid #cbd5e1;border-radius:7px;max-width:100%;font-size:15px}
+button{padding:11px 15px;border:0;border-radius:7px;background:#1769d2;color:white;cursor:pointer;font-size:14px}
+button.secondary{background:#475569}button.danger{background:#b91c1c}button:disabled{opacity:.55;cursor:not-allowed}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row input{flex:1;min-width:160px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat{background:#eaf2ff;padding:13px;border-radius:9px}.stat strong{font-size:24px;display:block}
+.small{font-size:13px;color:#64748b}.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:10px;border-bottom:1px solid #e2e8f0;vertical-align:top}
+th{background:#f8fafc}.status{display:inline-block;background:#dcfce7;color:#166534;padding:4px 7px;border-radius:5px}
+.error{color:#b91c1c}#mensagem{margin-top:12px;overflow-wrap:anywhere}
+#video{display:none;width:100%;max-width:520px;max-height:360px;background:#0f172a;border-radius:10px;margin-top:12px;object-fit:cover}
+.scan-status{padding:10px;border-radius:8px;background:#f1f5f9;margin-top:10px;overflow-wrap:anywhere}
+@media(max-width:600px){main{padding:10px}.card{padding:14px}.stats{grid-template-columns:1fr 1fr}header{padding:18px}}
 </style>
 </head>
 <body>
-<h1>Rota Paty</h1>
-<p class="muted">Importe sua planilha, bipe os pacotes, numere na ordem desejada e exporte a lista.</p>
-
+<header><h1>🚚 Rota Paty</h1><div>Controle de pacotes, entregas e motoristas</div></header>
+<main>
 <section class="card">
-<h2>1. Importar planilha</h2>
-<label for="file">Selecione o arquivo Excel (.xlsx ou .xls) ou CSV</label>
-<input id="file" type="file" accept=".xlsx,.xls,.csv">
-<div id="importMsg" class="muted">A planilha precisa conter o código/número do pedido e as colunas de endereço.</div>
+<h2>1. Importar planilha de entregas</h2>
+<p>Selecione a Carta de Porte em Excel (.xlsx, .xls) ou CSV.</p>
+<input type="file" id="arquivo" accept=".xlsx,.xls,.csv">
+<div id="mensagem" aria-live="polite">Nenhuma planilha importada.</div>
+<p class="small">A planilha é processada neste navegador. Excel e scanner precisam de internet para carregar as bibliotecas. Os dados ficam salvos neste navegador.</p>
 </section>
-
 <section class="card">
-<h2>2. Bipe ou pesquise um pacote</h2>
-<p class="muted">Clique no campo e use o leitor de código de barras. Também pode digitar o código e apertar Enter.</p>
-<div class="row">
-<input id="barcode" placeholder="Bipe com leitor USB/Bluetooth ou use a câmera" autocomplete="off">
-<button id="findBtn">Localizar</button>
-</div>
-<div class="row" style="margin-top:8px">
-<button id="startScan">Escanear com a câmera</button>
-<button id="stopScan" class="secondary" disabled>Parar câmera</button>
-</div>
-<div id="scanner" style="display:none;margin-top:12px;max-width:480px"></div>
-<div id="message" aria-live="polite"></div>
-<div id="current" hidden>
-<div class="muted">Endereço do pacote encontrado</div>
-<div id="currentName" class="address"></div>
-<div id="currentAddress" class="address"></div>
-<div id="currentDetails" class="detail"></div>
-<div class="row" style="margin-top:12px">
-<label for="manualNumber" style="margin:0;align-self:center">Número da rota</label>
-<input id="manualNumber" type="number" min="1" step="1" class="num" placeholder="Nº">
-<button id="saveNumber">Salvar número</button>
-</div>
-<p class="muted">O número é manual. Você escolhe a ordem de cada pacote.</p>
-</div>
-</section>
-
-<section class="card">
-<h2>3. Pacotes numerados</h2>
+<h2>2. Resumo da operação</h2>
 <div class="stats">
-<div class="stat"><strong id="total">0</strong><span>Pacotes importados</span></div>
-<div class="stat"><strong id="numbered">0</strong><span>Pacotes numerados</span></div>
-<div class="stat"><strong id="pending">0</strong><span>Sem número</span></div>
-</div>
-<div class="row" style="margin:12px 0">
-<input id="filter" placeholder="Filtrar por código, nome ou endereço">
-<button id="exportBtn">Baixar CSV para Circuit</button>
-</div>
-<p class="muted">A exportação sai na ordem dos números que você definiu. Pacotes sem número ficam no final.</p>
-<div class="tablewrap">
-<table>
-<thead><tr><th>Nº</th><th>Código/pedido</th><th>Destinatário</th><th>Endereço</th><th>Ação</th></tr></thead>
-<tbody id="rows"><tr><td colspan="5">Importe a planilha para começar.</td></tr></tbody>
-</table>
+<div class="stat"><strong id="total">0</strong><span>Pedidos importados</span></div>
+<div class="stat"><strong id="pendentes">0</strong><span>Pacotes pendentes</span></div>
+<div class="stat"><strong id="lidos">0</strong><span>Pacotes conferidos</span></div>
 </div>
 </section>
+<section class="card">
+<h2>3. Bipar ou pesquisar pacote</h2>
+<p>Digite o código ou use a câmera. No modo contínuo, a câmera permanece aberta para ler vários pacotes seguidos.</p>
+<div class="row">
+<input id="codigo" placeholder="Código de barras ou número do pedido" autocomplete="off">
+<button id="buscar">Buscar pacote</button>
+</div>
+<div class="row" style="margin-top:10px">
+<button id="iniciarScanner">📷 Iniciar scanner contínuo</button>
+<button id="pararScanner" class="danger" disabled>Parar scanner</button>
+</div>
+<video id="video" playsinline muted></video>
+<div id="scannerStatus" class="scan-status" aria-live="polite">Scanner desligado.</div>
+<div id="resultado" aria-live="polite"></div>
+<p class="small">A câmera normalmente exige que a página esteja aberta por HTTPS ou em localhost. Se o navegador pedir permissão, toque em Permitir.</p>
+</section>
+<section class="card">
+<h2>4. Cadastrar motorista</h2>
+<div class="row"><input id="nomeMotorista" placeholder="Nome do motorista"><button id="adicionarMotorista">Adicionar motorista</button></div>
+<div id="listaMotoristas" style="margin-top:12px"></div>
+</section>
+<section class="card">
+<h2>5. Pedidos e distribuição das rotas</h2>
+<div class="row">
+<input id="filtro" placeholder="Filtrar por pedido, nome, CEP ou endereço">
+<select id="filtroMotorista"><option value="">Todos os motoristas</option></select>
+<select id="filtroStatus"><option value="">Todos os status</option><option value="Pendente">Pendentes</option><option value="Conferido">Conferidos</option></select>
+</div>
+<div class="row" style="margin-top:12px">
+<select id="destinoMotorista"><option value="">Selecione o motorista</option></select>
+<button id="atribuir">Atribuir selecionados</button><button id="exportar" class="secondary">Exportar CSV</button>
+</div>
+<p class="small">Marque os pedidos na tabela antes de atribuí-los a um motorista.</p>
+<div class="table-wrap" style="margin-top:12px"><table>
+<thead><tr><th><input type="checkbox" id="todos" aria-label="Selecionar todos"></th><th>Pedido / código</th><th>Destinatário</th><th>Endereço</th><th>CEP</th><th>Motorista</th><th>Status</th></tr></thead>
+<tbody id="tabela"><tr><td colspan="7">Importe uma planilha para começar.</td></tr></tbody>
+</table></div>
+</section>
+</main>
 <script>
-const $ = id => document.getElementById(id);
-let packages = [], selectedId = null, columns = {};
-  const STORAGE_KEY = "rotaPatyDados";
-function salvarDados() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      packages,
-      columns
-    }));
-  } catch (e) {
-    console.error("Erro ao salvar dados:", e);
-  }
+const $=id=>document.getElementById(id);
+function lerArmazenado(chave, padrao){try{const x=JSON.parse(localStorage.getItem(chave)||"null");return x===null?padrao:x}catch{return padrao}}
+let pedidos=lerArmazenado("rotaPaty_pedidos",[]);
+let motoristas=lerArmazenado("rotaPaty_motoristas",[]);
+let colunas=lerArmazenado("rotaPaty_colunas",{});
+let scannerReader=null, scannerControls=null, scannerAtivo=false, ultimoCodigo="", ultimoTempo=0, processandoLeitura=false;
+
+function normalizar(s){return String(s??"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().trim()}
+function valor(p,chave){const c=colunas[chave];const registro=p&&p.dados?p.dados:p;return c&&registro?String(registro[c]??"").trim():""}
+function descobrirColunas(headers){
+ const h=headers.map(x=>({original:x,nome:normalizar(x)}));
+ function localizar(...termos){const encontrados=termos.map(normalizar);return (h.find(col=>encontrados.some(t=>col.nome===t))||h.find(col=>encontrados.some(t=>col.nome.includes(t)))||{}).original||""}
+ const colunaEndereco=localizar("endereco de entrega","endereco destino","logradouro","endereco","rua");
+ const colunaComplemento=localizar("complemento","numero do imovel","numero");
+ colunas={
+  pedido:localizar("numero de pedido jms","numero de pedido","pedido","order id","codigo de barras","barcode","awb","tracking"),
+  destinatario:localizar("destinatario","consignatario","nome do cliente","cliente"),
+  cep:localizar("cep destino","cep"),cidade:localizar("cidade destino","cidade","municipio"),
+  endereco:colunaEndereco||colunaComplemento,complemento:colunaEndereco?colunaComplemento:"",
+  distrito:localizar("distrito destinatario","distrito","bairro"),
+  motorista:localizar("nome do entregador responsavel","entregador responsavel","motorista","entregador")
+ };
 }
-function carregarDados() {
-  try {
-    const dados = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-    if (dados) {
-      packages = dados.packages || [];
-      columns = dados.columns || {};
-    }
-  } catch (e) {
-    console.error("Erro ao carregar dados:", e);
-  }
+function endereco(p){return [valor(p,"endereco"),valor(p,"complemento"),valor(p,"distrito"),valor(p,"cidade")].filter(Boolean).join(", ")}
+function salvarEstado(){try{localStorage.setItem("rotaPaty_pedidos",JSON.stringify(pedidos));localStorage.setItem("rotaPaty_motoristas",JSON.stringify(motoristas));localStorage.setItem("rotaPaty_colunas",JSON.stringify(colunas));}catch(e){mostrarMensagem("Não foi possível salvar os dados no navegador. O armazenamento pode estar cheio.",true)}}
+function mostrarMensagem(texto,erro=false){$("mensagem").textContent=texto;$("mensagem").className=erro?"error":""}
+function buscarPorCodigo(codigo){
+ const c=normalizar(codigo);
+ if(!c)return {tipo:"vazio",quantidade:0};
+ const encontrados=pedidos.filter(p=>normalizar(p.codigo)===c || normalizar(valor(p,"pedido"))===c);
+ if(!encontrados.length)return {tipo:"nao-encontrado",quantidade:0};
+ const novos=encontrados.filter(p=>p.status!=="Conferido");
+ if(!novos.length)return {tipo:"duplicado",quantidade:encontrados.length};
+ novos.forEach(p=>p.status="Conferido");salvarEstado();atualizar();
+ $("filtro").value=encontrados[0].codigo;
+ return {tipo:"conferido",quantidade:novos.length,total:encontrados.length,pedido:encontrados[0]};
 }
-function norm(v){return String(v ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");}
-function findCol(headers, aliases){
-  const normalized = headers.map(h=>({raw:h,n:norm(h)}));
-  for(const a of aliases){const hit=normalized.find(h=>h.n===norm(a));if(hit)return hit.raw;}
-  for(const a of aliases){const aa=norm(a);const hit=normalized.find(h=>h.n.includes(aa));if(hit)return hit.raw;}
-  return "";
+function mostrarResultado(res,codigo){
+ if(res.tipo==="vazio")$("resultado").textContent="Digite ou leia um código para pesquisar.";
+ else if(res.tipo==="nao-encontrado")$("resultado").textContent="Código não encontrado na planilha: "+codigo+". Confira se a coluna de pedido/código foi identificada corretamente.";
+ else if(res.tipo==="duplicado")$("resultado").textContent="⚠️ Pacote "+codigo+" já estava conferido. Não foi contado novamente.";
+ else $("resultado").textContent="✅ "+res.quantidade+" pacote(s) conferido(s). Código: "+codigo+(res.total>res.quantidade?" ("+res.total+" registros encontrados).":"");
 }
-function get(row,key){const c=columns[key];return c ? String(row[c] ?? "").trim() : "";}
-function makeAddress(row){
-  const parts=[];
-  const street=get(row,"address");
-  const number=get(row,"number");
-  const complement=get(row,"complement");
-  const district=get(row,"district");
-  const city=get(row,"city");
-  const state=get(row,"state");
-  const cep=get(row,"cep");
-  if(street)parts.push(number && !street.match(new RegExp("\\b"+number.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\b")) ? street+", "+number : street);
-  else if(number)parts.push("Nº "+number);
-  if(complement)parts.push(complement);
-  if(district)parts.push(district);
-  if(city)parts.push(city+(state?"/"+state:""));
-  else if(state)parts.push(state);
-  if(cep)parts.push("CEP "+cep);
-  return parts.join(" - ");
-}
-function setMessage(text,good=false){$("message").textContent=text;$("message").className=good?"good":"bad";}
-function render(){
-  $("total").textContent=packages.length;
-  $("numbered").textContent=packages.filter(p=>Number.isInteger(p.routeNo)&&p.routeNo>0).length;
-  $("pending").textContent=packages.filter(p=>!(Number.isInteger(p.routeNo)&&p.routeNo>0)).length;
-  const q=norm($("filter").value);
-  const shown=[...packages].sort((a,b)=>{
-    const an=Number.isInteger(a.routeNo)&&a.routeNo>0?a.routeNo:Infinity;
-    const bn=Number.isInteger(b.routeNo)&&b.routeNo>0?b.routeNo:Infinity;
-    return an-bn || a.index-b.index;
-  }).filter(p=>!q||norm([p.code,p.name,p.address,p.rawAddress].join(" ")).includes(q));
-  $("rows").innerHTML="";
-  if(!shown.length){$("rows").innerHTML='<tr><td colspan="5">Nenhum pacote encontrado.</td></tr>';return;}
-  for(const p of shown){
-    const tr=document.createElement("tr");
-    const td=(value)=>{const e=document.createElement("td");e.textContent=value||"—";return e;};
-    tr.append(td(p.routeNo||"—"),td(p.code),td(p.name),td(p.address||p.rawAddress));
-    const action=td("");
-    const b=document.createElement("button");b.className="secondary";b.textContent="Abrir";
-    b.addEventListener("click",()=>showPackage(p.id));action.appendChild(b);tr.appendChild(action);
-    $("rows").appendChild(tr);
-  }
-}
-function showPackage(id){
-  const p=packages.find(x=>x.id===id);if(!p)return;
-  selectedId=id;
-const current = document.getElementById("current");
-if (!current) {
-  setMessage("Erro: área do pacote não encontrada.", false);
-  return;
-}
-current.hidden = false;
-current.scrollIntoView({behavior:"smooth",block:"start"});
-  $("currentName").textContent=p.name||"Destinatário não identificado";
-  $("currentAddress").textContent=p.address||p.rawAddress||"Endereço não encontrado nas colunas reconhecidas.";
-  $("currentDetails").textContent="Código/pedido: "+p.code+(p.cep?" | CEP: "+p.cep:"");
-  $("manualNumber").value=p.routeNo||"";
-    
-  setMessage("Pacote localizado.",true);
-}
-function searchPackage(){
-  const q=$("barcode").value.trim();if(!q){setMessage("Digite ou bipe o código do pacote.");return;}
-  const nq=norm(q);
-  let p=packages.find(x=>norm(x.code)===nq);
-  if(!p)p=packages.find(x=>norm(x.code).includes(nq)||nq.includes(norm(x.code)));
-  if(!p){setMessage("Pacote não encontrado na planilha. Confira o código lido.");$("current").hidden=true;return;}
-  showPackage(p.id);
-}
-$("file").addEventListener("change",async e=>{
-  const file=e.target.files[0];if(!file)return;
-  try{
-    let data;
-    if(file.name.toLowerCase().endsWith(".csv")){
-      const text=await file.text();const wb=XLSX.read(text,{type:"string"});const sn=wb.SheetNames[0];data=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:""});
-    }else{
-      const buf=await file.arrayBuffer();const wb=XLSX.read(buf,{type:"array"});const sn=wb.SheetNames[0];data=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:""});
-    }
-    if(!data.length){$("importMsg").textContent="A planilha está vazia ou não foi possível ler os dados.";return;}
-    const headers=Object.keys(data[0]);
-    columns={
-      code:findCol(headers,["numero de pedido jms","numero do pedido jms","numero de pedido","pedido","order id","codigo de barras","barcode","codigo","rastreamento","tracking"]),
-      name:findCol(headers,["destinatario","nome do destinatario","cliente","nome","consignee","recipient"]),
-      address:findCol(headers,["endereco","logradouro","rua","address","endereco de entrega"]),
-      number:findCol(headers,["numero","numero da casa","numero do endereco","nº","num"]),
-      complement:findCol(headers,["complemento","apartamento","apto","unidade","complement"]),
-      district:findCol(headers,["bairro","distrito","district","neighborhood"]),
-      city:findCol(headers,["cidade","municipio","city"]),
-      state:findCol(headers,["uf","estado","state"]),
-      cep:findCol(headers,["cep","codigo postal","postal code","zip"])
-    };
-    if(!columns.code){
-      $("importMsg").textContent="Não encontrei a coluna de pedido/código. Cabeçalhos encontrados: "+headers.join(", ");
-      return;
-    }
-    packages=data.map((row,i)=>{
-      const rawAddress=makeAddress(row);
-      const code=String(row[columns.code]??"").trim();
-      return {id:"p"+i,index:i,raw:row,code,name:columns.name?String(row[columns.name]??"").trim():"",address:rawAddress,rawAddress,cep:columns.cep?String(row[columns.cep]??"").trim():"",routeNo:null};
-    }).filter(p=>p.code);
-    salvarDados();
-    selectedId=null;$("current").hidden=true;
-    $("importMsg").textContent=`Importação concluída: ${packages.length} pacotes da aba "${file.name}". Colunas identificadas: ${headers.join(", ")}.`;
-    render();$("barcode").focus();
-  }catch(err){$("importMsg").textContent="Erro ao ler a planilha: "+err.message;}
-});
-$("findBtn").addEventListener("click",searchPackage);
-$("barcode").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();searchPackage();}});
-let qrScanner=null;
-$("startScan").addEventListener("click",async()=>{
-  if(!packages.length){setMessage("Importe a planilha antes de escanear.");return;}
-  if(!window.Html5Qrcode){setMessage("Não foi possível carregar o leitor de câmera. Confira a conexão com a internet.");return;}
-  $("scanner").style.display="block";$("startScan").disabled=true;$("stopScan").disabled=false;
-  try{
-    qrScanner=new Html5Qrcode("scanner");
-    const cameras=await Html5Qrcode.getCameras();
-    if(!cameras.length)throw new Error("Nenhuma câmera encontrada.");
-    const camera=cameras.find(c=>/back|rear|environment|traseira/i.test(c.label))||cameras[cameras.length-1];
-    await qrScanner.start(camera.id,{fps:10,qrbox:{width:280,height:140},aspectRatio:1.777},
-      decodedText=>{
-        $("barcode").value=decodedText;
-        searchPackage();
-        stopCamera();
-      },()=>{});
-    setMessage("Câmera ligada. Aponte para o código de barras.",true);
-  }catch(err){
-    setMessage("Não consegui abrir a câmera: "+err.message+". No celular, abra o aplicativo por uma página HTTPS ou permita o acesso à câmera.");
-    $("startScan").disabled=false;$("stopScan").disabled=true;
-    if(qrScanner){try{await qrScanner.clear();}catch(e){} qrScanner=null;}
-  }
-});
-async function stopCamera(){
-  if(qrScanner){try{await qrScanner.stop();}catch(e){}try{await qrScanner.clear();}catch(e){}qrScanner=null;}
-  $("scanner").style.display="none";$("startScan").disabled=false;$("stopScan").disabled=true;
-}
-$("stopScan").addEventListener("click",stopCamera);
-$("saveNumber").addEventListener("click",()=>{
-  const p=packages.find(x=>x.id===selectedId);if(!p){setMessage("Primeiro bipe ou abra um pacote.");return;}
-  const n=Number($("manualNumber").value);
-  if(!Number.isInteger(n)||n<1){setMessage("Digite um número inteiro maior que zero.");return;}
-  const duplicate=packages.find(x=>x.id!==p.id&&x.routeNo===n);
-  if(duplicate&&!confirm("O número "+n+" já está no pacote "+duplicate.code+". Deseja usar o mesmo número?"))return;
-  p.routeNo=n;salvarDados();render();setMessage("Pacote "+p.code+" salvo com o número "+n+".",true);$("barcode").focus();
-});
-$("filter").addEventListener("input",render);
-$("exportBtn").addEventListener("click",()=>{
-  if(!packages.length){alert("Importe uma planilha primeiro.");return;}
-  const sorted=[...packages].sort((a,b)=>{
-    const an=Number.isInteger(a.routeNo)&&a.routeNo>0?a.routeNo:Infinity;
-    const bn=Number.isInteger(b.routeNo)&&b.routeNo>0?b.routeNo:Infinity;
-    return an-bn||a.index-b.index;
+$("arquivo").addEventListener("change",async e=>{
+ const f=e.target.files[0];if(!f)return;
+ if(!window.XLSX){mostrarMensagem("Não foi possível carregar o leitor Excel. Verifique a internet e recarregue a página.",true);return}
+ try{
+  const dados=await f.arrayBuffer(),wb=XLSX.read(dados,{type:"array"}),nomeAba=wb.SheetNames[0];
+  const linhas=XLSX.utils.sheet_to_json(wb.Sheets[nomeAba],{defval:"",raw:false});
+  if(!linhas.length){mostrarMensagem("A planilha está vazia ou não tem linhas de dados.",true);return}
+  descobrirColunas(Object.keys(linhas[0]));
+  if(!colunas.pedido){mostrarMensagem("Não encontrei uma coluna de pedido ou código. Confira os cabeçalhos da planilha.",true);return}
+  const antigos=new Map(pedidos.map(p=>[normalizar(p.codigo),p]));
+  pedidos=linhas.map((p,i)=>{
+   const codigo=String(p[colunas.pedido]??"").trim()||String(i+1),anterior=antigos.get(normalizar(codigo));
+   return {id:anterior?.id??(Date.now()+i),dados:p,codigo,status:anterior?.status||"Pendente",motorista:anterior?.motorista||valor({dados:p},"motorista")};
   });
-  const rows=[["Order","Name","Address","Stop Number","Postal Code","Order ID"]];
-const predios=new Map();
-
-for(const p of sorted){
-  const endereco=String(p.address||p.rawAddress||"").trim();
-  const partes=endereco.split(",");
-  const rua=partes.slice(0,2).join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\b(apto|apartamento|ap|bloco|torre|unidade|sala|casa)\b.*$/i,"").replace(/\s+/g," ").trim();
-  const chave=rua+"|"+String(p.city||"").toLowerCase()+"|"+String(p.cep||"").replace(/\D/g,"");
-  const numeroPredio=String(endereco.match(/\b\d+[A-Za-z]?\b/)||[""])[0];
-
-  const chaveFinal=chave+"|"+numeroPredio;
-
-  if(predios.has(chaveFinal)){
-    const grupo=predios.get(chaveFinal);
-    grupo.orders.push(p);
-    continue;
-  }
-
-  const grupo={orders:[p],stop:p.routeNo||""};
-  predios.set(chaveFinal,grupo);
-}
-
-for(const grupo of predios.values()){
-  for(const p of grupo.orders){
-    rows.push([p.name||p.code,p.name,p.address||p.rawAddress,grupo.stop,p.cep,p.code]);
-  }
-}
-  for(const p of sorted){
-    rows.push([p.name||p.code,p.name,p.address||p.rawAddress,p.routeNo||"",p.cep,p.code]);
-  }
-  const csv=rows.map(row=>row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");
-  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});
-  const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="rota-paty-para-circuit.csv";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  salvarEstado();mostrarMensagem("Importação concluída: "+pedidos.length+" pedidos, aba "+nomeAba+".");atualizar();
+ }catch(err){mostrarMensagem("Erro ao ler a planilha: "+err.message,true)}
 });
-render();
-  carregarDados();
-render();
+function atualizar(){
+ $("total").textContent=pedidos.length;$("lidos").textContent=pedidos.filter(p=>p.status==="Conferido").length;$("pendentes").textContent=pedidos.filter(p=>p.status!=="Conferido").length;
+ const fm=$("filtroMotorista").value,fs=$("filtroStatus").value,q=normalizar($("filtro").value);
+ const filtrados=pedidos.filter(p=>{const texto=normalizar([p.codigo,valor(p,"destinatario"),endereco(p),valor(p,"cep")].join(" "));return (!q||texto.includes(q))&&(!fm||p.motorista===fm)&&(!fs||p.status===fs)});
+ $("tabela").innerHTML="";
+ if(!filtrados.length){$("tabela").innerHTML='<tr><td colspan="7">Nenhum pedido encontrado.</td></tr>'}
+ else filtrados.forEach(p=>{
+  const tr=document.createElement("tr"),td=document.createElement("td"),check=document.createElement("input");
+  check.type="checkbox";check.className="pedidoCheck";check.value=p.id;td.appendChild(check);tr.appendChild(td);
+  [p.codigo,valor(p,"destinatario"),endereco(p),valor(p,"cep"),p.motorista||"Não atribuído",p.status].forEach((v,i)=>{const c=document.createElement("td");if(i===5&&v==="Conferido"){const b=document.createElement("span");b.className="status";b.textContent=v;c.appendChild(b)}else c.textContent=v||"—";tr.appendChild(c)});$("tabela").appendChild(tr);
+ });
+ const nomes=motoristas.map(m=>m.nome);
+ ["filtroMotorista","destinoMotorista"].forEach(id=>{const sel=$(id),ant=sel.value;sel.innerHTML='<option value="">'+(id==="filtroMotorista"?"Todos os motoristas":"Selecione o motorista")+'</option>';nomes.forEach(n=>{const o=document.createElement("option");o.value=n;o.textContent=n;sel.appendChild(o)});if(nomes.includes(ant))sel.value=ant});
+ $("listaMotoristas").textContent=nomes.length?nomes.join(" • "):"Nenhum motorista cadastrado.";
+}
+$("buscar").addEventListener("click",()=>{const codigo=$("codigo").value.trim();const res=buscarPorCodigo(codigo);mostrarResultado(res,codigo)});
+$("codigo").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("buscar").click()}});
+$("adicionarMotorista").addEventListener("click",()=>{const nome=$("nomeMotorista").value.trim();if(!nome)return alert("Digite o nome do motorista.");if(motoristas.some(m=>normalizar(m.nome)===normalizar(nome)))return alert("Esse motorista já está cadastrado.");motoristas.push({nome});salvarEstado();$("nomeMotorista").value="";atualizar()});
+$("atribuir").addEventListener("click",()=>{const nome=$("destinoMotorista").value;if(!nome)return alert("Selecione um motorista.");const ids=[...document.querySelectorAll(".pedidoCheck:checked")].map(c=>Number(c.value));if(!ids.length)return alert("Marque pelo menos um pedido.");pedidos.filter(p=>ids.includes(p.id)).forEach(p=>p.motorista=nome);salvarEstado();atualizar();$("resultado").textContent=ids.length+" pedido(s) atribuído(s) a "+nome+"."});
+$("todos").addEventListener("change",()=>document.querySelectorAll(".pedidoCheck").forEach(c=>c.checked=$("todos").checked));
+["filtro","filtroMotorista","filtroStatus"].forEach(id=>$(id).addEventListener(id==="filtro"?"input":"change",atualizar));
+$("exportar").addEventListener("click",()=>{
+ if(!pedidos.length)return alert("Importe uma planilha primeiro.");
+ const linhas=[["Pedido","Destinatário","Endereço","CEP","Cidade","Motorista","Status"]];
+ pedidos.forEach(p=>linhas.push([p.codigo,valor(p,"destinatario"),endereco(p),valor(p,"cep"),valor(p,"cidade"),p.motorista,p.status]));
+ const csv="\uFEFF"+linhas.map(l=>l.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(";")).join("\r\n");
+ const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"})),a=document.createElement("a");a.href=url;a.download="rota-paty.csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+let scannerStream=null, scannerFrame=null, detector=null;
+async function iniciarScanner(){
+ if(scannerAtivo)return;
+ const video=$("video");
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+  $("scannerStatus").textContent="Este navegador não liberou a câmera. Abra o Rota Paty em uma página HTTPS no Chrome, não pelo visualizador de arquivos.";
+  return;
+ }
+ if(!("BarcodeDetector" in window)){
+  $("scannerStatus").textContent="Este navegador não oferece leitor de código de barras integrado. Abra o Rota Paty no Google Chrome atualizado; se continuar, precisaremos instalar uma biblioteca de scanner que carregue corretamente.";
+  return;
+ }
+ try{
+  detector=new BarcodeDetector({formats:["code_128","code_39","ean_13","ean_8","upc_a","upc_e","itf","codabar","qr_code","data_matrix"]});
+  $("scannerStatus").textContent="Solicitando acesso à câmera…";
+  scannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false});
+  video.srcObject=scannerStream;video.setAttribute("playsinline","");video.muted=true;video.style.display="block";
+  await video.play();
+  scannerAtivo=true;$("iniciarScanner").disabled=true;$("pararScanner").disabled=false;
+  $("scannerStatus").textContent="Scanner ativo. Aponte para o código de barras do pacote.";
+  const ler=async()=>{
+   if(!scannerAtivo)return;
+   if(video.readyState>=2&&!processandoLeitura){
+    try{
+     const codigos=await detector.detect(video);
+     if(codigos.length){
+      const codigo=String(codigos[0].rawValue||"").trim(),agora=Date.now();
+      if(codigo&&!(codigo===ultimoCodigo&&agora-ultimoTempo<1800)){
+       ultimoCodigo=codigo;ultimoTempo=agora;processandoLeitura=true;
+       $("codigo").value=codigo;
+       const res=buscarPorCodigo(codigo);mostrarResultado(res,codigo);
+       $("scannerStatus").textContent="Scanner ativo — último código lido: "+codigo+". Aponte para o próximo pacote.";
+       if(navigator.vibrate)navigator.vibrate(100);
+       setTimeout(()=>{processandoLeitura=false},900);
+      }
+     }
+    }catch(err){}
+   }
+   if(scannerAtivo)scannerFrame=requestAnimationFrame(ler);
+  };
+  scannerFrame=requestAnimationFrame(ler);
+ }catch(err){
+  scannerAtivo=false;
+  if(scannerStream){scannerStream.getTracks().forEach(t=>t.stop());scannerStream=null}
+  video.srcObject=null;video.style.display="none";
+  $("scannerStatus").textContent="Não foi possível abrir a câmera: "+(err?.message||err)+". Confira a permissão da câmera e se a página está em HTTPS.";
+  $("iniciarScanner").disabled=false;$("pararScanner").disabled=true;
+ }
+}
+function pararScanner(){
+ scannerAtivo=false;
+ if(scannerFrame)cancelAnimationFrame(scannerFrame);
+ if(scannerStream){scannerStream.getTracks().forEach(t=>t.stop());scannerStream=null}
+ const video=$("video");video.pause();video.srcObject=null;video.style.display="none";
+ $("iniciarScanner").disabled=false;$("pararScanner").disabled=true;$("scannerStatus").textContent="Scanner desligado.";
+}
+$("iniciarScanner").addEventListener("click",iniciarScanner);
+$("pararScanner").addEventListener("click",pararScanner);
+window.addEventListener("pagehide",pararScanner);
+atualizar();
+if(pedidos.length)mostrarMensagem("Dados anteriores carregados: "+pedidos.length+" pedidos.");
 </script>
 </body>
 </html>
