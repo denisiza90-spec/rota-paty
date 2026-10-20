@@ -1,40 +1,633 @@
 <!DOCTYPE html>
-<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Rota Paty</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rota Paty</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
-:root{font-family:Arial,sans-serif;color:#172033;background:#f1f5f9}*{box-sizing:border-box}body{margin:0}header{background:#123b70;color:white;padding:22px}header h1{margin:0 0 6px}main{max-width:1100px;margin:auto;padding:18px}.card{background:white;padding:20px;margin-bottom:16px;border-radius:12px;box-shadow:0 2px 8px #0001}h2{font-size:19px;margin-top:0}input,select{padding:11px;border:1px solid #cbd5e1;border-radius:7px;max-width:100%;font-size:15px}button{padding:11px 15px;border:0;border-radius:7px;background:#1769d2;color:white;cursor:pointer;font-size:14px}button.secondary{background:#475569}button:disabled{opacity:.5;cursor:not-allowed}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row input{flex:1;min-width:160px}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.stat{background:#eaf2ff;padding:13px;border-radius:9px}.stat strong{font-size:24px;display:block}.small{font-size:13px;color:#64748b}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:10px;border-bottom:1px solid #e2e8f0;vertical-align:top}th{background:#f8fafc}.status{display:inline-block;background:#dcfce7;color:#166534;padding:4px 7px;border-radius:5px}.error{color:#b91c1c}#mensagem,#resultado{margin-top:12px;overflow-wrap:anywhere}#scanner{width:100%;max-width:520px;margin-top:0}#scanner video{border-radius:8px;display:block;width:100%;object-fit:cover}.scan-workspace{position:relative;width:100%;max-width:720px;margin:12px auto 0}#visorPacote{position:absolute;z-index:5;top:12px;right:12px;max-width:58%;background:#0f172aee;color:#fff;border:2px solid #fff;border-radius:12px;padding:10px 13px;margin:0;text-align:center;box-shadow:0 3px 12px #0005;pointer-events:none}#visorPacote strong{display:block;font-size:clamp(19px,5vw,30px);letter-spacing:.3px;line-height:1.1}#visorPacote span{display:block;color:#e2e8f0;font-size:12px;margin-top:5px;overflow-wrap:anywhere}body.camera-mode main>section:not(:nth-of-type(3)){display:none}body.camera-mode main{padding-top:10px}body.camera-mode header{padding:10px 16px}body.camera-mode header h1{font-size:20px;margin-bottom:2px}body.camera-mode header div{font-size:12px}.route-number{display:inline-block;background:#dbeafe;color:#1d4ed8;font-weight:bold;padding:4px 8px;border-radius:6px}#visorPacote{background:#0f172a;color:#fff;border-radius:14px;padding:18px;margin:12px 0;text-align:center}#visorPacote strong{display:block;font-size:34px;letter-spacing:.5px}#visorPacote span{display:block;color:#cbd5e1;margin-top:5px}
+:root{font-family:Arial,sans-serif;color:#172033;background:#f1f5f9}
+*{box-sizing:border-box}
+body{margin:0}
+header{background:#123b70;color:white;padding:22px}
+header h1{margin:0 0 6px}
+main{max-width:1100px;margin:auto;padding:18px}
+.card{background:white;padding:20px;margin-bottom:16px;border-radius:12px;box-shadow:0 2px 8px #0001}
+h2{font-size:19px;margin-top:0}
+input,select{padding:11px;border:1px solid #cbd5e1;border-radius:7px;max-width:100%;font-size:15px}
+button{padding:11px 15px;border:0;border-radius:7px;background:#1769d2;color:white;cursor:pointer;font-size:14px}
+button.secondary{background:#475569}
+button:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row input{flex:1;min-width:160px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat{background:#eaf2ff;padding:13px;border-radius:9px}
+.stat strong{font-size:24px;display:block}
+.small{font-size:13px;color:#64748b}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:10px;border-bottom:1px solid #e2e8f0;vertical-align:top}
+th{background:#f8fafc}
+.status{display:inline-block;background:#dcfce7;color:#166534;padding:4px 7px;border-radius:5px}
+.error{color:#b91c1c}
+#mensagem,#resultado{margin-top:12px;overflow-wrap:anywhere}
+#scanner{width:100%;max-width:520px;margin-top:0}
+#scanner video{border-radius:8px;display:block;width:100%;object-fit:cover}
+.scan-workspace{position:relative;width:100%;max-width:720px;margin:12px auto 0}
+#visorPacote{background:#0f172a;color:white;border-radius:14px;padding:18px;margin:12px 0;text-align:center}
+#visorPacote strong{display:block;font-size:34px;letter-spacing:.5px}
+#visorPacote span{display:block;color:#cbd5e1;margin-top:5px}
 #exportarScanner{width:100%;margin-top:10px;background:#0f766e;font-weight:bold}
-#scannerLista{margin-top:14px;background:#fff;border:1px solid #dbe3ed;border-radius:10px;overflow:hidden}
+#scannerLista{margin-top:14px;background:white;border:1px solid #dbe3ed;border-radius:10px;overflow:hidden}
 #scannerLista h3{font-size:16px;margin:0;padding:12px;background:#f1f5f9}
 .scan-order{display:grid;grid-template-columns:28px 1fr;gap:9px;align-items:start;padding:10px 12px;border-top:1px solid #e2e8f0}
 .scan-order .check{font-size:22px;line-height:1;color:#0f9f6e;font-weight:bold}
 .scan-order .check.pending{color:#94a3b8}
 .scan-order .order-title{font-weight:bold;overflow-wrap:anywhere}
 .scan-order .order-address{font-size:13px;color:#475569;margin-top:3px;overflow-wrap:anywhere}
-.scan-order .order-number{display:inline-block;background:#dbeafe;color:#1d4ed8;border-radius:5px;padding:2px 6px;margin-right:5px}
-@media(max-width:600px){main{padding:10px}.card{padding:14px}.stats{grid-template-columns:1fr 1fr}header{padding:16px}}
-</style></head><body><header><h1>🚚 Rota Paty</h1><div>Controle de pacotes, entregas e motoristas</div></header><main>
-<section class="card"><h2>1. Importar planilha de entregas</h2><p>Selecione a Carta de Porte em Excel (.xlsx, .xls) ou CSV.</p><input type="file" id="arquivo" accept=".xlsx,.xls,.csv"><div id="mensagem" aria-live="polite">Nenhuma planilha importada.</div><p class="small">A planilha é processada neste navegador. A biblioteca Excel precisa de internet para carregar.</p></section>
-<section class="card"><h2>2. Resumo da operação</h2><div class="stats"><div class="stat"><strong id="total">0</strong><span>Pedidos importados</span></div><div class="stat"><strong id="pendentes">0</strong><span>Pacotes pendentes</span></div><div class="stat"><strong id="lidos">0</strong><span>Pacotes conferidos</span></div></div></section>
-<section class="card"><h2>3. Bipar ou pesquisar pacote</h2><p>Use leitor USB/Bluetooth, digite o código e pressione Enter, ou abra a câmera. O scanner continua ligado até você pará-lo.</p><div class="row"><input id="codigo" placeholder="Código de barras ou número do pedido" autocomplete="off"><button id="buscar">Buscar pacote</button></div><div class="row" style="margin-top:8px"><button id="iniciarCamera">Abrir scanner da câmera</button><button id="pararCamera" class="secondary" disabled>Parar câmera</button></div><button id="exportarScanner">⬇ Baixar planilha para o Circuit</button><div class="scan-workspace"><div id="scanner" hidden></div><div id="visorPacote" aria-live="polite"><strong id="numeroVisor">PACOTE —</strong><span id="textoVisor">Aguardando leitura do primeiro pacote</span></div></div><div id="resultado" aria-live="polite"></div><div id="scannerLista"><h3>Pacotes e endereços — ✓ conferidos</h3><div id="scannerListaItens"><div class="scan-order"><span class="check pending">□</span><div>Importe a planilha para listar os pacotes aqui.</div></div></div></div><p class="small">O ✓ verde indica pacote bipado. A lista de endereços fica abaixo do scanner, e o botão acima baixa o arquivo para importar no Circuit.</p></section>
-<section class="card"><h2>4. Cadastrar motorista</h2><div class="row"><input id="nomeMotorista" placeholder="Nome do motorista"><button id="adicionarMotorista">Adicionar motorista</button></div><div id="listaMotoristas" style="margin-top:12px"></div></section>
-<section class="card"><h2>5. Pedidos e distribuição das rotas</h2><div class="row"><input id="filtro" placeholder="Filtrar por pedido, nome, CEP ou endereço"><select id="filtroMotorista"><option value="">Todos os motoristas</option></select><select id="filtroStatus"><option value="">Todos os status</option><option value="Pendente">Pendentes</option><option value="Conferido">Conferidos</option></select></div><div class="row" style="margin-top:12px"><select id="destinoMotorista"><option value="">Selecione o motorista</option></select><button id="atribuir">Atribuir selecionados</button><button id="exportar" class="secondary">Exportar CSV</button></div><p class="small">Marque os pedidos na tabela antes de atribuí-los a um motorista. “Parada” mostra a ordem automática de conferência.</p><div class="table-wrap" style="margin-top:12px"><table><thead><tr><th><input type="checkbox" id="todos" aria-label="Selecionar todos"></th><th>Parada</th><th>Pedido / código</th><th>Destinatário</th><th>Endereço</th><th>CEP</th><th>Motorista</th><th>Status</th></tr></thead><tbody id="tabela"><tr><td colspan="8">Importe uma planilha para começar.</td></tr></tbody></table></div></section></main>
+.order-number{display:inline-block;background:#dbeafe;color:#1d4ed8;border-radius:5px;padding:2px 6px;margin-right:5px}
+.route-number{display:inline-block;background:#dbeafe;color:#1d4ed8;font-weight:bold;padding:4px 8px;border-radius:6px}
+@media(max-width:600px){
+ main{padding:10px}.card{padding:14px}
+ .stats{grid-template-columns:1fr 1fr}
+ header{padding:16px}
+}
+body.camera-mode main>section:not(:nth-of-type(3)){display:none}
+body.camera-mode main{padding-top:10px}
+body.camera-mode header{padding:10px 16px}
+body.camera-mode header h1{font-size:20px;margin-bottom:2px}
+body.camera-mode header div{font-size:12px}
+</style>
+</head>
+<body>
+<header>
+<h1>🚚 Rota Paty</h1>
+<div>Controle de pacotes, entregas e motoristas</div>
+</header>
+<main>
+<section class="card">
+<h2>1. Importar planilha de entregas</h2>
+<p>Selecione a Carta de Porte em Excel (.xlsx, .xls) ou CSV.</p>
+<input type="file" id="arquivo" accept=".xlsx,.xls,.csv">
+<div id="mensagem" aria-live="polite">Nenhuma planilha importada.</div>
+<p class="small">A planilha é processada neste navegador. É necessária internet para carregar as bibliotecas.</p>
+</section>
+
+<section class="card">
+<h2>2. Resumo da operação</h2>
+<div class="stats">
+<div class="stat"><strong id="total">0</strong><span>Pedidos importados</span></div>
+<div class="stat"><strong id="pendentes">0</strong><span>Pacotes pendentes</span></div>
+<div class="stat"><strong id="lidos">0</strong><span>Pacotes conferidos</span></div>
+</div>
+<div class="small" style="margin-top:10px">As paradas são calculadas separadamente do número de pacotes.</div>
+</section>
+
+<section class="card">
+<h2>3. Bipar ou pesquisar pacote</h2>
+<p>Use leitor USB/Bluetooth, digite o código e pressione Enter, ou abra a câmera. O scanner permanece ligado até você pará-lo.</p>
+<div class="row">
+<input id="codigo" placeholder="Código de barras ou número do pedido" autocomplete="off">
+<button id="buscar">Buscar pacote</button>
+</div>
+<div class="row" style="margin-top:8px">
+<button id="iniciarCamera">Abrir scanner da câmera</button>
+<button id="pararCamera" class="secondary" disabled>Parar câmera</button>
+</div>
+<button id="exportarScanner">⬇️ Baixar planilha para o Circuit</button>
+<div class="scan-workspace">
+<div id="scanner" hidden></div>
+<div id="visorPacote" aria-live="polite">
+<strong id="numeroVisor">PACOTE —</strong>
+<span id="textoVisor">Aguardando leitura do primeiro pacote</span>
+</div>
+</div>
+<div id="resultado" aria-live="polite"></div>
+<div id="scannerLista">
+<h3>Pacotes e endereços — ✓ conferidos</h3>
+<div id="scannerListaItens"></div>
+</div>
+<p class="small">O ✓ verde indica pacote bipado. A lista de endereços fica abaixo do scanner.</p>
+</section>
+
+<section class="card">
+<h2>4. Cadastrar motorista</h2>
+<div class="row">
+<input id="nomeMotorista" placeholder="Nome do motorista">
+<button id="adicionarMotorista">Adicionar motorista</button>
+</div>
+<div id="listaMotoristas" style="margin-top:12px"></div>
+</section>
+
+<section class="card">
+<h2>5. Pedidos e distribuição das rotas</h2>
+<div class="row">
+<input id="filtro" placeholder="Filtrar por pedido, nome, CEP ou endereço">
+<select id="filtroMotorista"><option value="">Todos os motoristas</option></select>
+<select id="filtroStatus">
+<option value="">Todos os status</option>
+<option value="Pendente">Pendentes</option>
+<option value="Conferido">Conferidos</option>
+</select>
+</div>
+<div class="row" style="margin-top:12px">
+<select id="destinoMotorista"><option value="">Selecione o motorista</option></select>
+<button id="atribuir">Atribuir selecionados</button>
+<button id="exportar" class="secondary">Exportar CSV</button>
+</div>
+<p class="small">Marque os pedidos na tabela antes de atribuí-los a um motorista. A coluna Parada mostra o grupo do endereço.</p>
+<div class="table-wrap" style="margin-top:12px">
+<table>
+<thead><tr>
+<th><input type="checkbox" id="todos" aria-label="Selecionar todos"></th>
+<th>Parada</th><th>Pedido / código</th><th>Destinatário</th>
+<th>Endereço</th><th>CEP</th><th>Motorista</th><th>Status</th>
+</tr></thead>
+<tbody id="tabela"><tr><td colspan="8">Importe uma planilha para começar.</td></tr></tbody>
+</table>
+</div>
+</section>
+</main>
+
 <script>
-const $=id=>document.getElementById(id);let pedidos=JSON.parse(localStorage.getItem('rotaPaty_pedidos')||'[]'),motoristas=JSON.parse(localStorage.getItem('rotaPaty_motoristas')||'[]'),colunas={},scanner=null,cameraLigada=false,ultimaLeitura='',ultimaLeituraEm=0,processando=false;
-function normalizar(s){return String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}
-function valor(p,k){const c=colunas[k],r=p&&p.dados?p.dados:p;return c&&r?String(r[c]??'').trim():''}
-function descobrirColunas(headers){const h=headers.map(x=>({original:x,nome:normalizar(x)}));function loc(...ts){ts=ts.map(normalizar);return(h.find(c=>ts.some(t=>c.nome===t))||h.find(c=>ts.some(t=>c.nome.includes(t)))||{}).original||''}const rua=loc('endereco de entrega','endereco destino','logradouro','endereco','rua'),comp=loc('complemento','numero do imovel','numero');colunas={pedido:loc('numero de pedido jms','numero de pedido','pedido','order id','codigo de barras','barcode','rastreamento','tracking'),destinatario:loc('destinatario','consignatario','nome do cliente','cliente','recipient'),cep:loc('cep destino','cep','codigo postal'),cidade:loc('cidade destino','cidade','municipio'),endereco:rua||comp,complemento:rua?comp:'',distrito:loc('distrito destinatario','distrito','bairro'),motorista:loc('nome do entregador responsavel','entregador responsavel','motorista','entregador')}}
-function endereco(p){return[valor(p,'endereco'),valor(p,'complemento'),valor(p,'distrito'),valor(p,'cidade')].filter(Boolean).join(', ')}function salvarEstado(){localStorage.setItem('rotaPaty_pedidos',JSON.stringify(pedidos));localStorage.setItem('rotaPaty_motoristas',JSON.stringify(motoristas))}function msg(t,err=false){$('mensagem').textContent=t;$('mensagem').className=err?'error':''}function resultado(t,err=false){$('resultado').textContent=t;$('resultado').className=err?'error':''}
-function proximoNumeroPacote(){return Math.max(0,...pedidos.map(p=>Number(p.numeroPacote)||0))+1}function proximaParada(){return Math.max(0,...pedidos.map(p=>Number(p.parada)||0))+1}function chaveEndereco(p){return normalizar([valor(p,'endereco'),valor(p,'cep'),valor(p,'distrito'),valor(p,'cidade')].join('|')).replace(/[^a-z0-9|]/g,'')}function agruparParadas(lista){const grupos=new Map();for(const p of lista){const k=chaveEndereco(p)||('pedido:'+p.codigo);if(!grupos.has(k))grupos.set(k,[]);grupos.get(k).push(p)}return [...grupos.values()]}function acharPedido(c){c=normalizar(c);return pedidos.find(p=>normalizar(p.codigo)===c)||pedidos.find(p=>normalizar(p.codigo).includes(c)||c.includes(normalizar(p.codigo)))||null}
-function tocarBip(){try{const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return;const ctx=new AudioCtx();const osc=ctx.createOscillator();const ganho=ctx.createGain();osc.type='sine';osc.frequency.setValueAtTime(880,ctx.currentTime);ganho.gain.setValueAtTime(0.0001,ctx.currentTime);ganho.gain.exponentialRampToValueAtTime(0.22,ctx.currentTime+0.015);ganho.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.18);osc.connect(ganho);ganho.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+0.19);osc.onended=()=>ctx.close()}catch(e){}}
-function atualizarListaScanner(){const box=$('scannerListaItens');if(!box)return;box.innerHTML='';if(!pedidos.length){box.innerHTML='<div class="scan-order"><span class="check pending">□</span><div>Importe a planilha para listar os pacotes aqui.</div></div>';return}const lista=[...pedidos].sort((a,b)=>{const na=Number(a.numeroPacote)||Infinity,nb=Number(b.numeroPacote)||Infinity;return na-nb});lista.forEach(p=>{const row=document.createElement('div');row.className='scan-order';const check=document.createElement('span');check.className='check '+(p.status==='Conferido'?'':'pending');check.textContent=p.status==='Conferido'?'✓':'□';const info=document.createElement('div');const title=document.createElement('div');title.className='order-title';const badge=document.createElement('span');badge.className='order-number';badge.textContent=p.parada?'Parada '+p.parada:(p.numeroPacote?'Pacote '+p.numeroPacote:'Pendente');title.appendChild(badge);title.appendChild(document.createTextNode(valor(p,'destinatario')||p.codigo||'Pacote sem identificação'));const address=document.createElement('div');address.className='order-address';address.textContent=(endereco(p)||'Endereço não informado')+' • Pedido: '+p.codigo;info.appendChild(title);info.appendChild(address);row.appendChild(check);row.appendChild(info);box.appendChild(row)})}
-function conferir(c,origem='manual'){c=String(c||'').trim();if(!c){resultado('Digite ou leia o código do pacote.',true);return}const agora=Date.now();if(origem==='camera'&&c===ultimaLeitura&&agora-ultimaLeituraEm<2500)return;if(processando)return;processando=true;if(origem==='camera'){ultimaLeitura=c;ultimaLeituraEm=agora}const p=acharPedido(c);if(!p){resultado('Código não encontrado na planilha: '+c,true);$('codigo').value='';processando=false;if(origem!=='camera')$('codigo').focus();return}const ja=p.status==='Conferido';p.status='Conferido';if(!p.numeroPacote)p.numeroPacote=proximoNumeroPacote();if(!p.parada)p.parada=proximaParada();salvarEstado();atualizar();$('filtro').value='';$('filtroStatus').value='';$('filtroMotorista').value='';$('numeroVisor').textContent='PACOTE '+p.numeroPacote;$('textoVisor').textContent=(valor(p,'destinatario')||p.codigo)+' • '+(endereco(p)||'Endereço não informado');resultado((ja?'Pacote já conferido':'Pacote conferido')+' — PACOTE '+p.numeroPacote+' | Pedido: '+p.codigo+(valor(p,'destinatario')?' | '+valor(p,'destinatario'):'')+(endereco(p)?' | '+endereco(p):''));tocarBip();$('codigo').value='';if(origem!=='camera')$('codigo').focus();processando=false}
-$('arquivo').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;if(!window.XLSX){msg('Não foi possível carregar o leitor Excel. Verifique a internet e recarregue.',true);return}try{let wb;if(f.name.toLowerCase().endsWith('.csv'))wb=XLSX.read(await f.text(),{type:'string'});else wb=XLSX.read(await f.arrayBuffer(),{type:'array'});const aba=wb.SheetNames[0],linhas=XLSX.utils.sheet_to_json(wb.Sheets[aba],{defval:''});if(!linhas.length){msg('A planilha está vazia ou não tem linhas de dados.',true);return}descobrirColunas(Object.keys(linhas[0]));if(!colunas.pedido){msg('Não encontrei coluna de pedido/código. Cabeçalhos: '+Object.keys(linhas[0]).join(', '),true);return}const antigos=new Map(pedidos.map(p=>[normalizar(p.codigo),p]));pedidos=linhas.map((dados,i)=>{const codigo=String(dados[colunas.pedido]??'').trim(),antigo=antigos.get(normalizar(codigo));return{id:antigo?.id??Date.now()+i,dados,codigo,status:antigo?.status??'Pendente',motorista:antigo?.motorista??String(dados[colunas.motorista]??'').trim(),parada:antigo?.parada??null,numeroPacote:antigo?.numeroPacote??null}}).filter(p=>p.codigo);salvarEstado();msg('Importação concluída: '+pedidos.length+' pedidos, aba '+aba+'.');atualizar()}catch(err){msg('Erro ao ler a planilha: '+err.message,true)}});
-$('buscar').addEventListener('click',()=>conferir($('codigo').value));$('codigo').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();conferir($('codigo').value)}});
-$('iniciarCamera').addEventListener('click',async()=>{if(!pedidos.length){resultado('Importe a planilha antes de abrir o scanner.',true);return}if(cameraLigada)return;if(!window.Html5Qrcode){resultado('O leitor de câmera não carregou. Verifique a internet.',true);return}$('scanner').hidden=false;$('iniciarCamera').disabled=true;$('pararCamera').disabled=false;document.body.classList.add('camera-mode');$('scanner').scrollIntoView({behavior:'smooth',block:'start'});try{scanner=new Html5Qrcode('scanner');const cams=await Html5Qrcode.getCameras();if(!cams.length)throw Error('Nenhuma câmera encontrada');const cam=cams.find(c=>/back|rear|environment|traseira/i.test(c.label))||cams[cams.length-1];await scanner.start(cam.id,{fps:12,qrbox:{width:280,height:150},aspectRatio:1.777},txt=>conferir(txt,'camera'),()=>{});cameraLigada=true;resultado('Scanner ligado. Leia vários pacotes; a câmera continuará aberta.')}catch(err){resultado('Não consegui abrir a câmera: '+err.message+'. Ela precisa de página HTTPS e permissão de acesso.',true);$('iniciarCamera').disabled=false;$('pararCamera').disabled=true;document.body.classList.remove('camera-mode');if(scanner){try{await scanner.clear()}catch(e){}scanner=null}$('scanner').hidden=true}});
-async function pararScanner(){if(scanner){try{if(cameraLigada)await scanner.stop()}catch(e){}try{await scanner.clear()}catch(e){}}scanner=null;cameraLigada=false;$('scanner').hidden=true;$('iniciarCamera').disabled=false;$('pararCamera').disabled=true;document.body.classList.remove('camera-mode');resultado('Scanner parado.')}$('pararCamera').addEventListener('click',pararScanner);
-function atualizar(){$('total').textContent=pedidos.length;$('lidos').textContent=pedidos.filter(p=>p.status==='Conferido').length;$('pendentes').textContent=pedidos.filter(p=>p.status!=='Conferido').length;const fm=$('filtroMotorista').value,fs=$('filtroStatus').value,q=normalizar($('filtro').value);const lista=pedidos.filter(p=>{const t=normalizar([p.codigo,valor(p,'destinatario'),endereco(p),valor(p,'cep')].join(' '));return(!q||t.includes(q))&&(!fm||p.motorista===fm)&&(!fs||p.status===fs)}).sort((a,b)=>(Number(a.parada)||Infinity)-(Number(b.parada)||Infinity));$('tabela').innerHTML='';if(!lista.length)$('tabela').innerHTML='<tr><td colspan="8">Nenhum pedido encontrado.</td></tr>';else lista.forEach(p=>{const tr=document.createElement('tr'),td=document.createElement('td'),ck=document.createElement('input');ck.type='checkbox';ck.className='pedidoCheck';ck.value=p.id;td.appendChild(ck);tr.appendChild(td);const n=document.createElement('td');if(p.parada){const b=document.createElement('span');b.className='route-number';b.textContent=p.parada;n.appendChild(b)}else n.textContent='—';tr.appendChild(n);[p.codigo,valor(p,'destinatario'),endereco(p),valor(p,'cep'),p.motorista||'Não atribuído',p.status].forEach((v,i)=>{const c=document.createElement('td');if(i===5&&v==='Conferido'){const b=document.createElement('span');b.className='status';b.textContent=v;c.appendChild(b)}else c.textContent=v||'—';tr.appendChild(c)});$('tabela').appendChild(tr)});const nomes=motoristas.map(m=>m.nome);['filtroMotorista','destinoMotorista'].forEach(id=>{const sel=$(id),ant=sel.value;sel.innerHTML='<option value="">'+(id==='filtroMotorista'?'Todos os motoristas':'Selecione o motorista')+'</option>';nomes.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;sel.appendChild(o)});if(nomes.includes(ant))sel.value=ant});$('listaMotoristas').textContent=nomes.length?nomes.join(' • '):'Nenhum motorista cadastrado.';atualizarListaScanner()}
-$('adicionarMotorista').addEventListener('click',()=>{const nome=$('nomeMotorista').value.trim();if(!nome)return alert('Digite o nome do motorista.');if(motoristas.some(m=>normalizar(m.nome)===normalizar(nome)))return alert('Esse motorista já está cadastrado.');motoristas.push({nome});$('nomeMotorista').value='';salvarEstado();atualizar()});$('atribuir').addEventListener('click',()=>{const nome=$('destinoMotorista').value;if(!nome)return alert('Selecione um motorista.');const ids=[...document.querySelectorAll('.pedidoCheck:checked')].map(c=>Number(c.value));if(!ids.length)return alert('Marque pelo menos um pedido.');pedidos.filter(p=>ids.includes(Number(p.id))).forEach(p=>p.motorista=nome);salvarEstado();atualizar();resultado(ids.length+' pedido(s) atribuído(s) a '+nome+'.')});$('todos').addEventListener('change',()=>document.querySelectorAll('.pedidoCheck').forEach(c=>c.checked=$('todos').checked));['filtro','filtroMotorista','filtroStatus'].forEach(id=>$(id).addEventListener(id==='filtro'?'input':'change',atualizar));
-$('exportarScanner').addEventListener('click',()=> $('exportar').click());
-$('exportar').addEventListener('click',()=>{if(!pedidos.length)return alert('Importe uma planilha primeiro.');const grupos=agruparParadas(pedidos);const linhas=[['Order','Name','Address','Stop Number','Postal Code','Order ID']];grupos.forEach((grupo,i)=>{const primeiro=grupo[0];const nomes=grupo.map(p=>valor(p,'destinatario')).filter(Boolean);const codigos=grupo.map(p=>p.codigo).filter(Boolean);const enderecoBase=[valor(primeiro,'endereco'),valor(primeiro,'distrito'),valor(primeiro,'cidade')].filter(Boolean).join(', ');const nome=nomes.length?nomes.join(' / '):codigos.join(' / ');linhas.push([nome,enderecoBase,enderecoBase,i+1,valor(primeiro,'cep'),codigos.join(' | ')]);});const csv='\uFEFF'+linhas.map(l=>l.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'})),a=document.createElement('a');a.href=url;a.download='rota-paty-para-circuit.csv';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);resultado('Planilha gerada: '+grupos.length+' paradas para '+pedidos.length+' pacotes. Pacotes no mesmo endereço foram agrupados.');});atualizar();
-</script></body></html>
+const $=id=>document.getElementById(id);
+
+let pedidos=JSON.parse(localStorage.getItem('rotaPaty_pedidos')||'[]');
+let motoristas=JSON.parse(localStorage.getItem('rotaPaty_motoristas')||'[]');
+let colunas={},scanner=null,cameraLigada=false;
+let ultimaLeitura='',ultimaLeituraEm=0,processando=false;
+
+function normalizar(s){
+ return String(s??'').normalize('NFD')
+ .replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+}
+
+function valor(p,k){
+ const c=colunas[k],r=p&&p.dados?p.dados:p;
+ return c&&r?String(r[c]??'').trim():'';
+}
+
+function descobrirColunas(headers){
+ const h=headers.map(x=>({original:x,nome:normalizar(x)}));
+ function loc(...ts){
+  ts=ts.map(normalizar);
+  return (h.find(c=>ts.some(t=>c.nome===t))||
+   h.find(c=>ts.some(t=>c.nome.includes(t)))||{}).original||'';
+ }
+ const rua=loc('endereco de entrega','endereco destino','logradouro','endereco','rua');
+ const comp=loc('complemento','numero do imovel','numero');
+ colunas={
+  pedido:loc('numero de pedido jms','numero de pedido','pedido','order id','codigo de barras','barcode','rastreamento','tracking'),
+  destinatario:loc('destinatario','consignatario','nome do cliente','cliente','recipient'),
+  cep:loc('cep destino','cep','codigo postal'),
+  cidade:loc('cidade destino','cidade','municipio'),
+  endereco:rua||comp,
+  complemento:rua?comp:'',
+  distrito:loc('distrito destinatario','distrito','bairro'),
+  motorista:loc('nome do entregador responsavel','entregador responsavel','motorista','entregador')
+ };
+}
+
+function endereco(p){
+ return [valor(p,'endereco'),valor(p,'complemento'),
+ valor(p,'distrito'),valor(p,'cidade')].filter(Boolean).join(', ');
+}
+
+function salvarEstado(){
+ localStorage.setItem('rotaPaty_pedidos',JSON.stringify(pedidos));
+ localStorage.setItem('rotaPaty_motoristas',JSON.stringify(motoristas));
+}
+
+function msg(t,err=false){
+ $('mensagem').textContent=t;
+ $('mensagem').className=err?'error':'';
+}
+function resultado(t,err=false){
+ $('resultado').textContent=t;
+ $('resultado').className=err?'error':'';
+}
+
+function proximoNumeroPacote(){
+ return Math.max(0,...pedidos.map(p=>Number(p.numeroPacote)||0))+1;
+}
+
+/*
+ Agrupamento:
+ - remove informações de apartamento/unidade;
+ - preserva número do prédio e torre/bloco;
+ - usa bairro e cidade para evitar misturar ruas;
+ - não usa CEP como critério obrigatório, pois o CEP pode variar
+   entre registros do mesmo prédio.
+*/
+function limparDetalheUnidade(s){
+ return normalizar(s)
+  .replace(/\b(apartamento|apart|apto|apt|unidade|departamento|conjunto|sala)\s*[:.#-]?\s*[a-z]?\s*\d+[a-z]?\b/g,' ')
+  .replace(/\b(apartamento|apart|apto|apt|unidade|departamento)\b/g,' ')
+  .replace(/\b(and(ar)?|piso)\s*\d+\b/g,' ')
+  .replace(/[.,;#]+/g,' ')
+  .replace(/\s+/g,' ')
+  .trim();
+}
+
+function chaveEndereco(p){
+ const rua=limparDetalheUnidade(valor(p,'endereco'));
+ const comp=normalizar(valor(p,'complemento'));
+
+ // Mantém bloco e torre como parte da identidade do prédio.
+ const blocos=(comp.match(/\b(bloco|torre|bl)\s*[a-z0-9-]+\b/g)||[])
+  .join(' ');
+
+ const base=[
+  rua,
+  blocos,
+  normalizar(valor(p,'distrito')),
+  normalizar(valor(p,'cidade'))
+ ].filter(Boolean).join('|');
+
+ // Se não houver endereço suficiente, não arrisca agrupar.
+ return rua && (valor(p,'distrito')||valor(p,'cidade')) ? base : '';
+}
+
+function agruparParadas(lista){
+ const grupos=new Map();
+ for(const p of lista){
+  const chave=chaveEndereco(p);
+  const k=chave||('pedido-individual:'+p.codigo);
+  if(!grupos.has(k))grupos.set(k,[]);
+  grupos.get(k).push(p);
+ }
+ return [...grupos.values()];
+}
+
+function mapaParadas(lista=pedidos){
+ const grupos=agruparParadas(lista);
+ const mapa=new Map();
+ grupos.forEach((grupo,i)=>{
+  grupo.forEach(p=>mapa.set(String(p.id),i+1));
+ });
+ return {grupos,mapa};
+}
+
+function acharPedido(c){
+ c=normalizar(c);
+ return pedidos.find(p=>normalizar(p.codigo)===c)||
+ pedidos.find(p=>normalizar(p.codigo).includes(c)||c.includes(normalizar(p.codigo)))||null;
+}
+
+/* Bip mais alto, com dois tons curtos. O volume do celular também influencia. */
+function tocarBip(){
+ try{
+  const AudioCtx=window.AudioContext||window.webkitAudioContext;
+  if(!AudioCtx)return;
+  const ctx=new AudioCtx();
+
+  const tocar=(freq,inicio,duracao)=>{
+   const osc=ctx.createOscillator(),ganho=ctx.createGain();
+   osc.type='sine';
+   osc.frequency.setValueAtTime(freq,ctx.currentTime+inicio);
+   ganho.gain.setValueAtTime(0.0001,ctx.currentTime+inicio);
+   ganho.gain.exponentialRampToValueAtTime(.65,ctx.currentTime+inicio+.015);
+   ganho.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+inicio+duracao);
+   osc.connect(ganho);ganho.connect(ctx.destination);
+   osc.start(ctx.currentTime+inicio);
+   osc.stop(ctx.currentTime+inicio+duracao+.02);
+  };
+
+  if(ctx.state==='suspended')ctx.resume();
+  tocar(1100,0,.16);
+  tocar(1400,.19,.16);
+  setTimeout(()=>ctx.close().catch(()=>{}),600);
+ }catch(e){}
+}
+
+function atualizarListaScanner(){
+ const box=$('scannerListaItens');
+ box.innerHTML='';
+ if(!pedidos.length){
+  box.textContent='Importe a planilha para listar os pacotes aqui.';
+  return;
+ }
+
+ const {mapa}=mapaParadas();
+ const lista=[...pedidos].sort((a,b)=>(Number(a.numeroPacote)||Infinity)-(Number(b.numeroPacote)||Infinity));
+
+ lista.forEach(p=>{
+  const row=document.createElement('div');
+  row.className='scan-order';
+
+  const check=document.createElement('span');
+  check.className='check '+(p.status==='Conferido'?'':'pending');
+  check.textContent=p.status==='Conferido'?'✓':'□';
+
+  const info=document.createElement('div');
+  const title=document.createElement('div');
+  title.className='order-title';
+
+  const badge=document.createElement('span');
+  badge.className='order-number';
+  badge.textContent='Parada '+(mapa.get(String(p.id))||'—');
+
+  title.appendChild(badge);
+  title.appendChild(document.createTextNode(valor(p,'destinatario')||p.codigo||'Pacote sem identificação'));
+
+  const address=document.createElement('div');
+  address.className='order-address';
+  address.textContent=(endereco(p)||'Endereço não informado')+' • Pedido: '+p.codigo;
+
+  info.appendChild(title);
+  info.appendChild(address);
+  row.appendChild(check);
+  row.appendChild(info);
+  box.appendChild(row);
+ });
+}
+
+function conferir(c,origem='manual'){
+ c=String(c||'').trim();
+ if(!c){resultado('Digite ou leia o código do pacote.',true);return;}
+
+ const agora=Date.now();
+ if(origem==='camera'&&c===ultimaLeitura&&agora-ultimaLeituraEm<2500)return;
+ if(processando)return;
+
+ processando=true;
+ if(origem==='camera'){ultimaLeitura=c;ultimaLeituraEm=agora;}
+
+ const p=acharPedido(c);
+ if(!p){
+  resultado('Código não encontrado na planilha: '+c,true);
+  $('codigo').value='';
+  processando=false;
+  if(origem!=='camera')$('codigo').focus();
+  return;
+ }
+
+ const ja=p.status==='Conferido';
+ p.status='Conferido';
+ if(!p.numeroPacote)p.numeroPacote=proximoNumeroPacote();
+
+ salvarEstado();
+ atualizar();
+
+ $('filtro').value='';
+ $('filtroStatus').value='';
+ $('filtroMotorista').value='';
+
+ const {mapa}=mapaParadas();
+ $('numeroVisor').textContent='PACOTE '+p.numeroPacote;
+ $('textoVisor').textContent=(valor(p,'destinatario')||p.codigo)+' • '+(endereco(p)||'Endereço não informado');
+
+ resultado((ja?'Pacote já conferido':'Pacote conferido')+
+ ' — PACOTE '+p.numeroPacote+' | Pedido: '+p.codigo+
+ (valor(p,'destinatario')?' | '+valor(p,'destinatario'):'')+
+ (endereco(p)?' | '+endereco(p):'')+
+ ' | Parada '+(mapa.get(String(p.id))||'—'));
+
+ tocarBip();
+ $('codigo').value='';
+ if(origem!=='camera')$('codigo').focus();
+ processando=false;
+}
+
+$('arquivo').addEventListener('change',async e=>{
+ const f=e.target.files[0];
+ if(!f)return;
+
+ if(!window.XLSX){
+  msg('Não foi possível carregar o leitor Excel. Verifique a internet e recarregue.',true);
+  return;
+ }
+
+ try{
+  let wb;
+  if(f.name.toLowerCase().endsWith('.csv'))
+   wb=XLSX.read(await f.text(),{type:'string'});
+  else wb=XLSX.read(await f.arrayBuffer(),{type:'array'});
+
+  const aba=wb.SheetNames[0];
+  const linhas=XLSX.utils.sheet_to_json(wb.Sheets[aba],{defval:''});
+
+  if(!linhas.length){msg('A planilha está vazia ou não tem linhas de dados.',true);return;}
+
+  descobrirColunas(Object.keys(linhas[0]));
+
+  if(!colunas.pedido){
+   msg('Não encontrei coluna de pedido/código. Cabeçalhos: '+Object.keys(linhas[0]).join(', '),true);
+   return;
+  }
+
+  const antigos=new Map(pedidos.map(p=>[normalizar(p.codigo),p]));
+
+  pedidos=linhas.map((dados,i)=>{
+   const codigo=String(dados[colunas.pedido]??'').trim();
+   const antigo=antigos.get(normalizar(codigo));
+   return {
+    id:antigo?.id??Date.now()+i,
+    dados,codigo,
+    status:antigo?.status??'Pendente',
+    motorista:antigo?.motorista??String(dados[colunas.motorista]??'').trim(),
+    numeroPacote:antigo?.numeroPacote??null
+   };
+  }).filter(p=>p.codigo);
+
+  salvarEstado();
+  const {grupos}=mapaParadas();
+  msg('Importação concluída: '+pedidos.length+' pacotes em '+grupos.length+' paradas estimadas. Aba '+aba+'.');
+  atualizar();
+ }catch(err){
+  msg('Erro ao ler a planilha: '+err.message,true);
+ }
+});
+
+$('buscar').addEventListener('click',()=>conferir($('codigo').value));
+$('codigo').addEventListener('keydown',e=>{
+ if(e.key==='Enter'){e.preventDefault();conferir($('codigo').value);}
+});
+
+$('iniciarCamera').addEventListener('click',async()=>{
+ if(!pedidos.length){resultado('Importe a planilha antes de abrir o scanner.',true);return;}
+ if(cameraLigada)return;
+ if(!window.Html5Qrcode){resultado('O leitor de câmera não carregou. Verifique a internet.',true);return;}
+
+ $('scanner').hidden=false;
+ $('iniciarCamera').disabled=true;
+ $('pararCamera').disabled=false;
+ document.body.classList.add('camera-mode');
+ $('scanner').scrollIntoView({behavior:'smooth',block:'start'});
+
+ try{
+  scanner=new Html5Qrcode('scanner');
+  const cams=await Html5Qrcode.getCameras();
+  if(!cams.length)throw Error('Nenhuma câmera encontrada');
+
+  const cam=cams.find(c=>/back|rear|environment|traseira/i.test(c.label))||cams[cams.length-1];
+
+  await scanner.start(cam.id,
+   {fps:12,qrbox:{width:280,height:150},aspectRatio:1.777},
+   txt=>conferir(txt,'camera'),()=>{});
+
+  cameraLigada=true;
+  resultado('Scanner ligado. Leia vários pacotes; a câmera continuará aberta.');
+ }catch(err){
+  resultado('Não consegui abrir a câmera: '+err.message+'. A página precisa de HTTPS e permissão de acesso.',true);
+  $('iniciarCamera').disabled=false;
+  $('pararCamera').disabled=true;
+  document.body.classList.remove('camera-mode');
+  if(scanner){try{await scanner.clear();}catch(e){}scanner=null;}
+  $('scanner').hidden=true;
+ }
+});
+
+async function pararScanner(){
+ if(scanner){
+  try{if(cameraLigada)await scanner.stop();}catch(e){}
+  try{await scanner.clear();}catch(e){}
+ }
+ scanner=null;
+ cameraLigada=false;
+ $('scanner').hidden=true;
+ $('iniciarCamera').disabled=false;
+ $('pararCamera').disabled=true;
+ document.body.classList.remove('camera-mode');
+ resultado('Scanner parado.');
+}
+$('pararCamera').addEventListener('click',pararScanner);
+
+function atualizar(){
+ $('total').textContent=pedidos.length;
+ $('lidos').textContent=pedidos.filter(p=>p.status==='Conferido').length;
+ $('pendentes').textContent=pedidos.filter(p=>p.status!=='Conferido').length;
+
+ const {mapa}=mapaParadas();
+ const fm=$('filtroMotorista').value,fs=$('filtroStatus').value,q=normalizar($('filtro').value);
+
+ const lista=pedidos.filter(p=>{
+  const t=normalizar([p.codigo,valor(p,'destinatario'),endereco(p),valor(p,'cep')].join(' '));
+  return(!q||t.includes(q))&&(!fm||p.motorista===fm)&&(!fs||p.status===fs);
+ }).sort((a,b)=>(mapa.get(String(a.id))||Infinity)-(mapa.get(String(b.id))||Infinity));
+
+ $('tabela').innerHTML='';
+
+ if(!lista.length){
+  $('tabela').innerHTML='<tr><td colspan="8">Nenhum pedido encontrado.</td></tr>';
+ }else{
+  lista.forEach(p=>{
+   const tr=document.createElement('tr'),td=document.createElement('td'),ck=document.createElement('input');
+   ck.type='checkbox';ck.className='pedidoCheck';ck.value=p.id;
+   td.appendChild(ck);tr.appendChild(td);
+
+   const n=document.createElement('td');
+   const b=document.createElement('span');
+   b.className='route-number';
+   b.textContent=mapa.get(String(p.id))||'—';
+   n.appendChild(b);tr.appendChild(n);
+
+   [p.codigo,valor(p,'destinatario'),endereco(p),valor(p,'cep'),p.motorista||'Não atribuído',p.status].forEach((v,i)=>{
+    const c=document.createElement('td');
+    if(i===5&&v==='Conferido'){
+     const badge=document.createElement('span');
+     badge.className='status';badge.textContent=v;c.appendChild(badge);
+    }else c.textContent=v||'—';
+    tr.appendChild(c);
+   });
+   $('tabela').appendChild(tr);
+  });
+ }
+
+ const nomes=motoristas.map(m=>m.nome);
+ ['filtroMotorista','destinoMotorista'].forEach(id=>{
+  const sel=$(id),ant=sel.value;
+  sel.innerHTML='<option value="">'+(id==='filtroMotorista'?'Todos os motoristas':'Selecione o motorista')+'</option>';
+  nomes.forEach(n=>{
+   const o=document.createElement('option');o.value=n;o.textContent=n;sel.appendChild(o);
+  });
+  if(nomes.includes(ant))sel.value=ant;
+ });
+
+ $('listaMotoristas').textContent=nomes.length?nomes.join(' • '):'Nenhum motorista cadastrado.';
+ atualizarListaScanner();
+}
+
+$('adicionarMotorista').addEventListener('click',()=>{
+ const nome=$('nomeMotorista').value.trim();
+ if(!nome)return alert('Digite o nome do motorista.');
+ if(motoristas.some(m=>normalizar(m.nome)===normalizar(nome)))return alert('Esse motorista já está cadastrado.');
+ motoristas.push({nome});
+ $('nomeMotorista').value='';
+ salvarEstado();atualizar();
+});
+
+$('atribuir').addEventListener('click',()=>{
+ const nome=$('destinoMotorista').value;
+ if(!nome)return alert('Selecione um motorista.');
+ const ids=[...document.querySelectorAll('.pedidoCheck:checked')].map(c=>String(c.value));
+ if(!ids.length)return alert('Marque pelo menos um pedido.');
+ pedidos.filter(p=>ids.includes(String(p.id))).forEach(p=>p.motorista=nome);
+ salvarEstado();atualizar();
+ resultado(ids.length+' pedido(s) atribuído(s) a '+nome+'.');
+});
+
+$('todos').addEventListener('change',()=>{
+ document.querySelectorAll('.pedidoCheck').forEach(c=>c.checked=$('todos').checked);
+});
+
+['filtro','filtroMotorista','filtroStatus'].forEach(id=>
+ $(id).addEventListener(id==='filtro'?'input':'change',atualizar)
+);
+
+$('exportarScanner').addEventListener('click',()=>exportarCircuito());
+
+/*
+ Exporta uma linha por parada, com os pedidos daquela parada
+ listados juntos em Order ID. O formato precisa ser testado
+ no Circuito para confirmar como ele interpreta múltiplos pedidos.
+*/
+function exportarCircuito(){
+ if(!pedidos.length)return alert('Importe uma planilha primeiro.');
+
+ const grupos=agruparParadas(pedidos);
+ const linhas=[['Order','Name','Address','Stop Number','Postal Code','Order ID']];
+
+ grupos.forEach((grupo,i)=>{
+  const primeiro=grupo[0];
+  const nomes=[...new Set(grupo.map(p=>valor(p,'destinatario')).filter(Boolean))];
+  const codigos=grupo.map(p=>p.codigo).filter(Boolean);
+
+  const enderecoBase=[
+   valor(primeiro,'endereco'),
+   valor(primeiro,'complemento'),
+   valor(primeiro,'distrito'),
+   valor(primeiro,'cidade')
+  ].filter(Boolean).join(', ');
+
+  linhas.push([
+   codigos.join(' | '),
+   nomes.join(' / ')||codigos.join(' / '),
+   enderecoBase,
+   i+1,
+   valor(primeiro,'cep'),
+   codigos.join(' | ')
+  ]);
+ });
+
+ const csv='\uFEFF'+linhas.map(l=>
+  l.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')
+ ).join('\r\n');
+
+ const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+ const a=document.createElement('a');
+ a.href=url;a.download='rota-paty-para-circuit.csv';
+ document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+
+ resultado('Arquivo gerado: '+grupos.length+' paradas estimadas para '+pedidos.length+
+ ' pacotes. Confira a quantidade e os pedidos no Circuito antes de iniciar as entregas.');
+}
+
+$('exportar').addEventListener('click',exportarCircuito);
+
+atualizar();
+</script>
+</body>
+</html>
