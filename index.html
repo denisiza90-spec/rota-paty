@@ -7,176 +7,763 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
-:root{font-family:Arial,sans-serif;color:#172033;background:#f1f5f9}*{box-sizing:border-box}body{margin:0}header{background:#123b70;color:white;padding:22px}header h1{margin:0 0 6px}main{max-width:1100px;margin:auto;padding:18px}.card{background:white;padding:20px;margin-bottom:16px;border-radius:12px;box-shadow:0 2px 8px #0001}h2{font-size:19px;margin-top:0}input,select{padding:11px;border:1px solid #cbd5e1;border-radius:7px;max-width:100%;font-size:15px}button{padding:11px 15px;border:0;border-radius:7px;background:#1769d2;color:white;cursor:pointer;font-size:14px}button.secondary{background:#475569}button.danger{background:#b91c1c}button:disabled{opacity:.5;cursor:not-allowed}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row input{flex:1;min-width:160px}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.stat{background:#eaf2ff;padding:13px;border-radius:9px}.stat strong{font-size:24px;display:block}.small{font-size:13px;color:#64748b}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:10px;border-bottom:1px solid #e2e8f0;vertical-align:top}th{background:#f8fafc}.status{display:inline-block;background:#dcfce7;color:#166534;padding:4px 7px;border-radius:5px}.error{color:#b91c1c}#mensagem,#resultado{margin-top:12px;overflow-wrap:anywhere}#scanner{width:100%;max-width:520px;margin-top:0}#scanner video{border-radius:8px;display:block;width:100%;object-fit:cover}.scan-workspace{position:relative;width:100%;max-width:720px;margin:12px auto 0}#visorPacote{background:#0f172a;color:#fff;border-radius:14px;padding:18px;margin:12px 0;text-align:center}#visorPacote strong{display:block;font-size:34px;letter-spacing:.5px}#visorPacote span{display:block;color:#cbd5e1;margin-top:5px}body.camera-mode main>section:not(:nth-of-type(3)){display:none}body.camera-mode main{padding-top:10px}body.camera-mode header{padding:10px 16px}body.camera-mode header h1{font-size:20px;margin-bottom:2px}body.camera-mode header div{font-size:12px}.route-number{display:inline-block;background:#dbeafe;color:#1d4ed8;font-weight:bold;padding:4px 8px;border-radius:6px}#exportarScanner{width:100%;margin-top:10px;background:#0f766e;font-weight:bold}#scannerLista{margin-top:14px;background:#fff;border:1px solid #dbe3ed;border-radius:10px;overflow:hidden}#scannerLista h3{font-size:16px;margin:0;padding:12px;background:#f1f5f9}.scan-order{display:grid;grid-template-columns:28px 1fr;gap:9px;align-items:start;padding:10px 12px;border-top:1px solid #e2e8f0}.scan-order .check{font-size:22px;line-height:1;color:#0f9f6e;font-weight:bold}.scan-order .check.pending{color:#94a3b8}.scan-order .order-title{font-weight:bold;overflow-wrap:anywhere}.scan-order .order-address{font-size:13px;color:#475569;margin-top:3px;overflow-wrap:anywhere}.scan-order .order-number{display:inline-block;background:#dbeafe;color:#1d4ed8;border-radius:5px;padding:2px 6px;margin-right:5px}@media(max-width:600px){main{padding:10px}.card{padding:14px}.stats{grid-template-columns:1fr 1fr}header{padding:16px}}
+:root{font-family:Arial,sans-serif;color:#172033;background:#f1f5f9}
+*{box-sizing:border-box}
+body{margin:0}
+header{background:#123b70;color:white;padding:18px}
+header h1{margin:0 0 5px;font-size:24px}
+main{max-width:1100px;margin:auto;padding:12px}
+.card{background:white;padding:16px;margin-bottom:12px;border-radius:12px;box-shadow:0 2px 8px #0001}
+h2{font-size:18px;margin-top:0}
+input,select{padding:11px;border:1px solid #cbd5e1;border-radius:7px;max-width:100%;font-size:15px}
+button{padding:12px 15px;border:0;border-radius:7px;background:#1769d2;color:white;font-size:14px;cursor:pointer}
+button.secondary{background:#475569}
+button:disabled{opacity:.5}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row input{flex:1;min-width:150px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{background:#eaf2ff;padding:12px;border-radius:9px}
+.stat strong{font-size:24px;display:block}
+.small{font-size:12px;color:#64748b}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:9px;border-bottom:1px solid #e2e8f0;vertical-align:top}
+th{background:#f8fafc}
+.status{background:#dcfce7;color:#166534;padding:4px 7px;border-radius:5px}
+.error{color:#b91c1c}
+#mensagem,#resultado{margin-top:10px;overflow-wrap:anywhere}
+#scanner{width:100%;max-width:600px;margin:auto}
+#scanner video{width:100%;border-radius:8px}
+.scan-workspace{position:relative;width:100%;max-width:720px;margin:10px auto}
+#visorPacote{background:#0f172a;color:white;border-radius:12px;padding:14px;margin:10px 0;text-align:center}
+#visorPacote strong{display:block;font-size:30px}
+#visorPacote span{display:block;color:#e2e8f0;font-size:13px;margin-top:5px;overflow-wrap:anywhere}
+#exportarScanner{width:100%;margin-top:8px;background:#0f766e;font-weight:bold}
+#scannerLista{margin-top:12px;background:white;border:1px solid #dbe3ed;border-radius:10px;overflow:hidden}
+#scannerLista h3{font-size:16px;margin:0;padding:12px;background:#f1f5f9}
+.scan-order{display:grid;grid-template-columns:26px 1fr;gap:8px;padding:10px 12px;border-top:1px solid #e2e8f0}
+.check{font-size:22px;color:#0f9f6e;font-weight:bold}
+.check.pending{color:#94a3b8}
+.order-title{font-weight:bold;overflow-wrap:anywhere}
+.order-address{font-size:13px;color:#475569;margin-top:4px;overflow-wrap:anywhere}
+.route-number{background:#dbeafe;color:#1d4ed8;font-weight:bold;padding:4px 8px;border-radius:6px}
+@media(max-width:600px){
+ main{padding:8px}.card{padding:12px}
+ header{padding:12px}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .stat{padding:8px}.stat strong{font-size:21px}
+}
+body.camera-mode main>section:not(:nth-of-type(3)){display:none}
+body.camera-mode main{padding-top:5px}
+body.camera-mode header{padding:9px 14px}
+body.camera-mode header h1{font-size:20px}
+body.camera-mode header div{font-size:12px}
 </style>
 </head>
 <body>
-<header><h1>🚚 Rota Paty</h1><div>Controle de pacotes, entregas e motoristas</div></header>
+<header>
+<h1>🚚 Rota Paty</h1>
+<div>Controle de pacotes, entregas e motoristas</div>
+</header>
+
 <main>
-<section class="card"><h2>1. Importar planilha de entregas</h2><p>Selecione a Carta de Porte em Excel (.xlsx, .xls) ou CSV.</p><input type="file" id="arquivo" accept=".xlsx,.xls,.csv"><div id="mensagem" aria-live="polite">Nenhuma planilha importada.</div><p class="small">A planilha é processada neste navegador. A biblioteca Excel precisa de internet para carregar.</p></section>
-<section class="card"><h2>2. Resumo da operação</h2><div class="stats"><div class="stat"><strong id="total">0</strong><span>Pedidos importados</span></div><div class="stat"><strong id="pendentes">0</strong><span>Pacotes pendentes</span></div><div class="stat"><strong id="lidos">0</strong><span>Pacotes conferidos</span></div></div></section>
-<section class="card"><h2>3. Bipar ou pesquisar pacote</h2><p>Use leitor USB/Bluetooth, digite o código e pressione Enter, ou abra a câmera. O scanner continua ligado até você pará-lo.</p><div class="row"><input id="codigo" placeholder="Código de barras ou número do pedido" autocomplete="off"><button id="buscar">Buscar pacote</button></div><div class="row" style="margin-top:8px"><button id="iniciarCamera">Abrir scanner da câmera</button><button id="pararCamera" class="secondary" disabled>Parar câmera</button></div><button id="exportarScanner">⬇ Baixar planilha para o Circuit</button><div class="scan-workspace"><div id="scanner" hidden></div><div id="visorPacote" aria-live="polite"><strong id="numeroVisor">PACOTE —</strong><span id="textoVisor">Aguardando leitura do primeiro pacote</span></div></div><div id="resultado" aria-live="polite"></div><div id="scannerLista"><div class="row" style="justify-content:space-between;padding:12px;gap:8px"><h3 style="padding:0;background:none">Histórico de pacotes bipados</h3><button id="limparHistorico" class="danger" type="button">Limpar histórico</button></div><div id="scannerListaItens"><div class="scan-order"><span class="check pending">□</span><div>Importe a planilha e bipe os pacotes para montar o histórico.</div></div></div></div><p class="small">O histórico mostra somente os pacotes bipados. A exportação envia somente esses pacotes, mantendo o número exibido no visor. Pacotes do mesmo endereço ficam na mesma parada.</p></section>
-<section class="card"><h2>4. Cadastrar motorista</h2><div class="row"><input id="nomeMotorista" placeholder="Nome do motorista"><button id="adicionarMotorista">Adicionar motorista</button></div><div id="listaMotoristas" style="margin-top:12px"></div></section>
-<section class="card"><h2>5. Pedidos e distribuição das rotas</h2><div class="row"><input id="filtro" placeholder="Filtrar por pedido, nome, CEP ou endereço"><select id="filtroMotorista"><option value="">Todos os motoristas</option></select><select id="filtroStatus"><option value="">Todos os status</option><option value="Pendente">Pendentes</option><option value="Conferido">Conferidos</option></select></div><div class="row" style="margin-top:12px"><select id="destinoMotorista"><option value="">Selecione o motorista</option></select><button id="atribuir">Atribuir selecionados</button><button id="exportar" class="secondary">Exportar CSV dos bipados</button></div><p class="small">Marque os pedidos na tabela antes de atribuí-los a um motorista. “Parada” mostra o agrupamento por endereço.</p><div class="table-wrap" style="margin-top:12px"><table><thead><tr><th><input type="checkbox" id="todos" aria-label="Selecionar todos"></th><th>Parada</th><th>Pedido / código</th><th>Destinatário</th><th>Endereço</th><th>CEP</th><th>Motorista</th><th>Status</th></tr></thead><tbody id="tabela"><tr><td colspan="8">Importe uma planilha para começar.</td></tr></tbody></table></div></section>
+<section class="card">
+<h2>1. Importar planilha de entregas</h2>
+<p>Selecione a Carta de Porte original em Excel ou CSV.</p>
+<input type="file" id="arquivo" accept=".xlsx,.xls,.csv">
+<div id="mensagem" aria-live="polite">Nenhuma planilha importada.</div>
+<p class="small">É necessário ter internet para carregar as bibliotecas.</p>
+</section>
+
+<section class="card">
+<h2>2. Resumo da operação</h2>
+<div class="stats">
+<div class="stat"><strong id="total">0</strong><span>Importados</span></div>
+<div class="stat"><strong id="pendentes">0</strong><span>Pendentes</span></div>
+<div class="stat"><strong id="lidos">0</strong><span>Conferidos</span></div>
+</div>
+</section>
+
+<section class="card">
+<h2>3. Bipar ou pesquisar pacote</h2>
+<p>Use a câmera ou um leitor USB/Bluetooth. Também é possível digitar o código e pressionar Enter.</p>
+<div class="row">
+<input id="codigo" placeholder="Código de barras ou pedido" autocomplete="off">
+<button id="buscar">Buscar</button>
+</div>
+<div class="row" style="margin-top:8px">
+<button id="iniciarCamera">📷 Abrir scanner</button>
+<button id="pararCamera" class="secondary" disabled>Parar câmera</button>
+</div>
+<button id="exportarScanner">⬇️ Baixar planilha para o Circuit</button>
+
+<div class="scan-workspace">
+<div id="scanner" hidden></div>
+<div id="visorPacote" aria-live="polite">
+<strong id="numeroVisor">PACOTE —</strong>
+<span id="textoVisor">Aguardando leitura do primeiro pacote</span>
+</div>
+</div>
+
+<div id="resultado" aria-live="polite"></div>
+<div id="scannerLista">
+<h3>Pacotes e endereços</h3>
+<div id="scannerListaItens">Importe a planilha para começar.</div>
+</div>
+<p class="small">✓ verde significa pacote conferido. O número do pacote é sequencial.</p>
+</section>
+
+<section class="card">
+<h2>4. Cadastrar motorista</h2>
+<div class="row">
+<input id="nomeMotorista" placeholder="Nome do motorista">
+<button id="adicionarMotorista">Adicionar</button>
+</div>
+<div id="listaMotoristas" style="margin-top:12px"></div>
+</section>
+
+<section class="card">
+<h2>5. Pedidos e rotas</h2>
+<div class="row">
+<input id="filtro" placeholder="Filtrar pedido ou endereço">
+<select id="filtroMotorista"><option value="">Todos os motoristas</option></select>
+<select id="filtroStatus">
+<option value="">Todos os status</option>
+<option value="Pendente">Pendentes</option>
+<option value="Conferido">Conferidos</option>
+</select>
+</div>
+<div class="row" style="margin-top:10px">
+<select id="destinoMotorista"><option value="">Selecione o motorista</option></select>
+<button id="atribuir">Atribuir selecionados</button>
+<button id="exportar" class="secondary">Exportar CSV</button>
+</div>
+<div class="table-wrap" style="margin-top:10px">
+<table>
+<thead><tr>
+<th><input type="checkbox" id="todos"></th>
+<th>Parada</th><th>Pedido/código</th><th>Destinatário</th>
+<th>Endereço</th><th>CEP</th><th>Motorista</th><th>Status</th>
+</tr></thead>
+<tbody id="tabela"><tr><td colspan="8">Importe uma planilha.</td></tr></tbody>
+</table>
+</div>
+</section>
 </main>
+
 <script>
 const $=id=>document.getElementById(id);
-let pedidos=JSON.parse(localStorage.getItem('rotaPaty_pedidos')||'[]'),
-motoristas=JSON.parse(localStorage.getItem('rotaPaty_motoristas')||'[]'),
-colunas=JSON.parse(localStorage.getItem('rotaPaty_colunas')||'{}'),
-scanner=null,cameraLigada=false,ultimaLeitura='',ultimaLeituraEm=0,processando=false;
 
-function normalizar(s){return String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}
-function valor(p,k){if(p&&p.campos&&p.campos[k]!==undefined&&p.campos[k]!==null&&String(p.campos[k]).trim()!=='')return String(p.campos[k]).trim();const c=colunas[k],r=p&&p.dados?p.dados:p;return c&&r?String(r[c]??'').trim():''}
+let pedidos=[];
+let motoristas=[];
+let colunas={};
+let scanner=null;
+let cameraLigada=false;
+let ultimaLeitura='';
+let ultimaLeituraEm=0;
+let processando=false;
+
+try {
+ pedidos=JSON.parse(localStorage.getItem('rotaPaty_pedidos')||'[]');
+ motoristas=JSON.parse(localStorage.getItem('rotaPaty_motoristas')||'[]');
+ colunas=JSON.parse(localStorage.getItem('rotaPaty_colunas')||'{}');
+} catch(e) {
+ pedidos=[];motoristas=[];colunas={};
+}
+
+function normalizar(s){
+ return String(s??'').normalize('NFD')
+ .replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+}
+
+function valor(p,k){
+ if(p?.campos?.[k]!==undefined &&
+    p.campos[k]!==null && String(p.campos[k]).trim()!=='')
+  return String(p.campos[k]).trim();
+
+ const c=colunas[k],r=p?.dados||p;
+ return c&&r?String(r[c]??'').trim():'';
+}
+
 function descobrirColunas(headers){
  const h=headers.map(x=>({original:x,nome:normalizar(x)}));
- function loc(...ts){ts=ts.map(normalizar);return(h.find(c=>ts.some(t=>c.nome===t))||h.find(c=>ts.some(t=>c.nome.includes(t)))||{}).original||''}
- const rua=loc('endereco de entrega','endereco destinatario','endereco destino','logradouro','endereco','rua','address'),
- comp=loc('complemento','apartamento','numero do imovel','numero do endereco','numero','complement'),
- cep=loc('cep destino','cep','codigo postal','postal code','zip'),cidade=loc('cidade destino','cidade','municipio','city');
- colunas={pedido:loc('numero de pedido jms','numero do pedido jms','numero de pedido','codigo de barras','barcode','rastreamento','tracking','order id','pedido','codigo'),destinatario:loc('nome do destinatario','destinatario','consignatario','nome do cliente','cliente','recipient','name'),cep,cidade,endereco:rua||comp,complemento:rua?comp:'',distrito:loc('distrito destinatario','bairro destinatario','distrito','bairro','neighborhood'),estado:loc('uf destino','estado destino','uf','estado','state'),motorista:loc('nome do entregador responsavel','entregador responsavel','motorista','entregador')};
- localStorage.setItem('rotaPaty_colunas',JSON.stringify(colunas))
+
+ function loc(...termos){
+  termos=termos.map(normalizar);
+  const exato=h.find(c=>termos.includes(c.nome));
+  const parcial=h.find(c=>termos.some(t=>c.nome.includes(t)));
+  return (exato||parcial||{}).original||'';
+ }
+
+ const rua=loc('endereco de entrega','endereco destinatario',
+  'endereco destino','logradouro','endereco','rua','address');
+
+ const comp=loc('complemento','apartamento','numero do imovel',
+  'numero do endereco','complement');
+
+ colunas={
+  pedido:loc('numero de pedido jms','numero do pedido jms',
+   'numero de pedido','codigo de barras','barcode','rastreamento',
+   'tracking','order id','pedido','codigo'),
+  destinatario:loc('nome do destinatario','destinatario',
+   'consignatario','nome do cliente','cliente','recipient','name'),
+  cep:loc('cep destino','cep','codigo postal','postal code','zip'),
+  cidade:loc('cidade destino','cidade','municipio','city'),
+  endereco:rua||comp,
+  complemento:rua?comp:'',
+  distrito:loc('distrito destinatario','bairro destinatario',
+   'distrito','bairro','neighborhood'),
+  estado:loc('uf destino','estado destino','uf','estado','state'),
+  motorista:loc('nome do entregador responsavel',
+   'entregador responsavel','motorista','entregador')
+ };
+
+ localStorage.setItem('rotaPaty_colunas',JSON.stringify(colunas));
 }
+
 function limparComplementosEndereco(texto){
  return String(texto||'')
- .replace(/[,;\s]+/g,' ')
- .replace(/\b(apartamento|apto?\.?|apart?\.?|bloco|bl\.?|torre|unidade|sala|conjunto)\s*[-:#]?\s*[a-z0-9-]+/gi,' ')
- .replace(/\s+/g,' ').replace(/\s*,\s*/g,', ').replace(/^[,\s]+|[,\s]+$/g,'').trim()
+ .replace(/\b(apartamento|apto?\.?|apart?\.?|bloco|bl\.?|torre|unidade|sala|conjunto|casa)\s*[-:#]?\s*[a-z0-9-]+/gi,' ')
+ .replace(/\s+/g,' ').replace(/\s*,\s*/g,', ')
+ .replace(/^[,\s]+|[,\s]+$/g,'').trim();
 }
-function endereco(p){const rua=limparComplementosEndereco(valor(p,'endereco'));return[rua,valor(p,'distrito'),valor(p,'cidade')].filter(Boolean).join(', ')}
-function salvarEstado(){localStorage.setItem('rotaPaty_pedidos',JSON.stringify(pedidos));localStorage.setItem('rotaPaty_motoristas',JSON.stringify(motoristas))}
-function msg(t,err=false){$('mensagem').textContent=t;$('mensagem').className=err?'error':''}
-function resultado(t,err=false){$('resultado').textContent=t;$('resultado').className=err?'error':''}
-function proximoNumeroPacote(){return Math.max(0,...pedidos.map(p=>Number(p.numeroPacote)||0))+1}
+
+function endereco(p){
+ return [
+  limparComplementosEndereco(valor(p,'endereco')),
+  valor(p,'distrito'),
+  valor(p,'cidade')
+ ].filter(Boolean).join(', ');
+}
+
+function salvarEstado(){
+ localStorage.setItem('rotaPaty_pedidos',JSON.stringify(pedidos));
+ localStorage.setItem('rotaPaty_motoristas',JSON.stringify(motoristas));
+}
+
+function msg(t,err=false){
+ $('mensagem').textContent=t;
+ $('mensagem').className=err?'error':'';
+}
+
+function resultado(t,err=false){
+ $('resultado').textContent=t;
+ $('resultado').className=err?'error':'';
+}
+
+function proximoNumeroPacote(){
+ return Math.max(0,...pedidos.map(p=>Number(p.numeroPacote)||0))+1;
+}
+
+function proximaParada(){
+ return Math.max(0,...pedidos.map(p=>Number(p.parada)||0))+1;
+}
+
 function chaveEndereco(p){
- // Agrupa pelo endereço físico, sem complemento, CEP ou destinatário, para que apartamentos do mesmo prédio sejam uma parada.
- const base=limparComplementosEndereco(valor(p,'endereco'));
- const partes=[base,valor(p,'distrito'),valor(p,'cidade'),valor(p,'estado')].map(x=>String(x||'').trim()).filter(Boolean);
+ const partes=[
+  limparComplementosEndereco(valor(p,'endereco')),
+  valor(p,'distrito'),valor(p,'cidade'),
+  valor(p,'estado'),valor(p,'cep')
+ ].map(x=>String(x||'').trim()).filter(Boolean);
+
  if(!partes.length)return '';
- return normalizar(partes.join('|')).replace(/[^a-z0-9|]/g,'')
+ return normalizar(partes.join('|')).replace(/[^a-z0-9|]/g,'');
 }
+
 function agruparParadas(lista){
  const grupos=new Map();
- for(const p of lista){const k=chaveEndereco(p)||('pedido-individual:'+p.codigo);if(!grupos.has(k))grupos.set(k,[]);grupos.get(k).push(p)}
- return [...grupos.values()]
+ for(const p of lista){
+  const k=chaveEndereco(p)||('pedido-individual:'+p.codigo);
+  if(!grupos.has(k))grupos.set(k,[]);
+  grupos.get(k).push(p);
+ }
+ return [...grupos.values()];
 }
+
+function limparCodigo(c){
+ return String(c??'').trim().replace(/\s+/g,'');
+}
+
 function acharPedido(c){
- c=normalizar(c);if(!c)return null;
- return pedidos.find(p=>normalizar(p.codigo)===c)||pedidos.find(p=>normalizar(p.codigo).includes(c)||c.includes(normalizar(p.codigo)))||null
+ c=normalizar(limparCodigo(c));
+ if(!c)return null;
+
+ let p=pedidos.find(p=>normalizar(limparCodigo(p.codigo))===c);
+ if(p)return p;
+
+ // Correspondência parcial apenas se for única.
+ const encontrados=pedidos.filter(p=>{
+  const cod=normalizar(limparCodigo(p.codigo));
+  return cod && (cod.includes(c)||c.includes(cod));
+ });
+
+ return encontrados.length===1?encontrados[0]:null;
 }
-function tocarBip(){try{const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return;const ctx=new AudioCtx(),osc=ctx.createOscillator(),ganho=ctx.createGain();osc.type='sine';osc.frequency.setValueAtTime(880,ctx.currentTime);ganho.gain.setValueAtTime(.0001,ctx.currentTime);ganho.gain.exponentialRampToValueAtTime(.22,ctx.currentTime+.015);ganho.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.18);osc.connect(ganho);ganho.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+.19);osc.onended=()=>ctx.close()}catch(e){}}
+
+function tocarBip(){
+ try{
+  const AudioCtx=window.AudioContext||window.webkitAudioContext;
+  if(!AudioCtx)return;
+  const ctx=new AudioCtx();
+  const osc=ctx.createOscillator();
+  const ganho=ctx.createGain();
+
+  osc.type='sine';
+  osc.frequency.setValueAtTime(880,ctx.currentTime);
+  ganho.gain.setValueAtTime(0.0001,ctx.currentTime);
+  ganho.gain.exponentialRampToValueAtTime(0.22,ctx.currentTime+0.015);
+  ganho.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.18);
+
+  osc.connect(ganho);ganho.connect(ctx.destination);
+  osc.start();osc.stop(ctx.currentTime+0.19);
+  osc.onended=()=>ctx.close();
+ }catch(e){}
+}
 
 function atualizarListaScanner(){
- const box=$('scannerListaItens');if(!box)return;box.innerHTML='';
- // Histórico só contém encomendas já bipadas, nunca a planilha inteira.
- const bipados=pedidos.filter(p=>p.status==='Conferido').sort((a,b)=>(Number(a.numeroPacote)||0)-(Number(b.numeroPacote)||0));
- if(!bipados.length){box.innerHTML='<div class="scan-order"><span class="check pending">□</span><div>Nenhum pacote bipado nesta rota.</div></div>';return}
- const grupos=agruparParadas(bipados);
- grupos.forEach(grupo=>{
-  const row=document.createElement('div');row.className='scan-order';
-  const check=document.createElement('span');check.className='check';check.textContent='✓';
-  const info=document.createElement('div'),title=document.createElement('div');title.className='order-title';
-  title.textContent=grupo.map(p=>'Pacote '+p.numeroPacote).join(', ');
-  const address=document.createElement('div');address.className='order-address';address.textContent=endereco(grupo[0])||'Endereço não informado';
-  info.appendChild(title);info.appendChild(address);row.appendChild(check);row.appendChild(info);box.appendChild(row)
- })
+ const box=$('scannerListaItens');
+ box.innerHTML='';
+
+ if(!pedidos.length){
+  box.textContent='Importe a planilha para listar os pacotes.';
+  return;
+ }
+
+ agruparParadas(pedidos).forEach(grupo=>{
+  const row=document.createElement('div');
+  row.className='scan-order';
+
+  const completo=grupo.every(p=>p.status==='Conferido');
+  const check=document.createElement('span');
+  check.className='check '+(completo?'':'pending');
+  check.textContent=completo?'✓':'□';
+
+  const info=document.createElement('div');
+  const title=document.createElement('div');
+  title.className='order-title';
+  title.textContent=grupo.map(p=>'Pacote '+(p.numeroPacote||'—')).join(', ');
+
+  const address=document.createElement('div');
+  address.className='order-address';
+  address.textContent=endereco(grupo[0])||'Endereço não informado';
+
+  info.append(title,address);
+  row.append(check,info);
+  box.appendChild(row);
+ });
 }
+
 function conferir(c,origem='manual'){
- c=String(c||'').trim();if(!c){resultado('Digite ou leia o código do pacote.',true);return}
- const agora=Date.now();if(origem==='camera'&&c===ultimaLeitura&&agora-ultimaLeituraEm<2500)return;
- if(processando)return;processando=true;if(origem==='camera'){ultimaLeitura=c;ultimaLeituraEm=agora}
+ c=limparCodigo(c);
+
+ if(!c){
+  resultado('Digite ou leia o código do pacote.',true);
+  return;
+ }
+
+ const agora=Date.now();
+
+ if(origem==='camera' && c===ultimaLeitura &&
+    agora-ultimaLeituraEm<2500)return;
+
+ if(processando)return;
+ processando=true;
+
+ if(origem==='camera'){
+  ultimaLeitura=c;
+  ultimaLeituraEm=agora;
+ }
+
  const p=acharPedido(c);
- if(!p){resultado('Código não encontrado na planilha: '+c,true);$('codigo').value='';processando=false;if(origem!=='camera')$('codigo').focus();return}
+
+ if(!p){
+  resultado('Código não encontrado na planilha: '+c,true);
+  $('codigo').value='';
+  processando=false;
+  if(origem!=='camera')$('codigo').focus();
+  return;
+ }
+
  const ja=p.status==='Conferido';
- if(!ja){p.status='Conferido';p.numeroPacote=proximoNumeroPacote()}
- if(!p.parada)p.parada=proximaParada();
- salvarEstado();atualizar();
- $('filtro').value='';$('filtroStatus').value='';$('filtroMotorista').value='';
+
+ if(!ja){
+  p.status='Conferido';
+  if(!p.numeroPacote)p.numeroPacote=proximoNumeroPacote();
+  if(!p.parada)p.parada=proximaParada();
+ }
+
+ salvarEstado();
+ atualizar();
+
+ $('filtro').value='';
+ $('filtroStatus').value='';
+ $('filtroMotorista').value='';
+
  $('numeroVisor').textContent='PACOTE '+p.numeroPacote;
  $('textoVisor').textContent=endereco(p)||'Endereço não informado';
- resultado((ja?'Pacote já conferido':'Pacote conferido')+' — PACOTE '+p.numeroPacote+' | '+(endereco(p)||'Endereço não informado'));
- if(!ja)tocarBip();$('codigo').value='';if(origem!=='camera')$('codigo').focus();processando=false
+
+ resultado((ja?'Pacote já conferido':'Pacote conferido')+
+  ' — PACOTE '+p.numeroPacote+' | '+(endereco(p)||'Endereço não informado'));
+
+ tocarBip();
+ $('codigo').value='';
+
+ if(origem!=='camera')$('codigo').focus();
+ processando=false;
 }
+
+// Importação de Excel e CSV
 $('arquivo').addEventListener('change',async e=>{
- const f=e.target.files[0];if(!f)return;
- if(!window.XLSX){msg('Não foi possível carregar o leitor Excel. Verifique a internet e recarregue.',true);return}
+ const f=e.target.files[0];
+ if(!f)return;
+
+ if(!window.XLSX){
+  msg('Biblioteca Excel não carregou. Verifique a internet.',true);
+  return;
+ }
+
  try{
-  let wb;if(f.name.toLowerCase().endsWith('.csv'))wb=XLSX.read(await f.text(),{type:'string'});else wb=XLSX.read(await f.arrayBuffer(),{type:'array'});
-  const aba=wb.SheetNames[0],linhas=XLSX.utils.sheet_to_json(wb.Sheets[aba],{defval:''});
-  if(!linhas.length){msg('A planilha está vazia ou não tem linhas de dados.',true);return}
+  let wb;
+
+  if(f.name.toLowerCase().endsWith('.csv')){
+   wb=XLSX.read(await f.text(),{type:'string'});
+  }else{
+   wb=XLSX.read(await f.arrayBuffer(),{type:'array'});
+  }
+
+  const aba=wb.SheetNames[0];
+  const linhas=XLSX.utils.sheet_to_json(wb.Sheets[aba],{
+   defval:'',
+   raw:false
+  });
+
+  if(!linhas.length){
+   msg('Planilha vazia ou sem linhas de dados.',true);
+   return;
+  }
+
   descobrirColunas(Object.keys(linhas[0]));
-  if(!colunas.pedido){msg('Não encontrei coluna de pedido/código. Cabeçalhos: '+Object.keys(linhas[0]).join(', '),true);return}
-  // Cada nova importação inicia uma nova operação limpa, evitando pacotes antigos marcados como bipados.
+
+  if(!colunas.pedido){
+   msg('Não encontrei a coluna do código. Cabeçalhos: '+
+    Object.keys(linhas[0]).join(', '),true);
+   return;
+  }
+
+  const antigos=new Map(pedidos.map(p=>[normalizar(p.codigo),p]));
+
   pedidos=linhas.map((dados,i)=>{
    const codigo=String(dados[colunas.pedido]??'').trim();
-   return{id:Date.now()+i,dados,codigo,campos:{destinatario:String(dados[colunas.destinatario]??'').trim(),endereco:String(dados[colunas.endereco]??'').trim(),complemento:String(dados[colunas.complemento]??'').trim(),distrito:String(dados[colunas.distrito]??'').trim(),cidade:String(dados[colunas.cidade]??'').trim(),estado:String(dados[colunas.estado]??'').trim(),cep:String(dados[colunas.cep]??'').trim()},status:'Pendente',motorista:String(dados[colunas.motorista]??'').trim(),parada:null,numeroPacote:null}
+   const antigo=antigos.get(normalizar(codigo));
+
+   return {
+    id:antigo?.id??Date.now()+i,
+    dados,
+    codigo,
+    campos:{
+     destinatario:String(dados[colunas.destinatario]??'').trim(),
+     endereco:String(dados[colunas.endereco]??'').trim(),
+     complemento:String(dados[colunas.complemento]??'').trim(),
+     distrito:String(dados[colunas.distrito]??'').trim(),
+     cidade:String(dados[colunas.cidade]??'').trim(),
+     estado:String(dados[colunas.estado]??'').trim(),
+     cep:String(dados[colunas.cep]??'').trim()
+    },
+    status:antigo?.status??'Pendente',
+    motorista:antigo?.motorista??String(dados[colunas.motorista]??'').trim(),
+    parada:antigo?.parada??null,
+    numeroPacote:antigo?.numeroPacote??null
+   };
   }).filter(p=>p.codigo);
-  salvarEstado();msg('Importação concluída: '+pedidos.length+' pedidos, aba '+aba+'. A nova rota começou sem histórico anterior.');atualizar()
- }catch(err){msg('Erro ao ler a planilha: '+err.message,true)}
+
+  salvarEstado();
+  msg('Importação concluída: '+pedidos.length+' pedidos, aba '+aba+'.');
+  atualizar();
+
+ }catch(err){
+  msg('Erro ao ler a planilha: '+err.message,true);
+ }
 });
+
 $('buscar').addEventListener('click',()=>conferir($('codigo').value));
-$('codigo').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();conferir($('codigo').value)}});
-$('iniciarCamera').addEventListener('click',async()=>{
- if(!pedidos.length){resultado('Importe a planilha antes de abrir o scanner.',true);return}
- if(cameraLigada)return;if(!window.Html5Qrcode){resultado('O leitor de câmera não carregou. Verifique a internet.',true);return}
- $('scanner').hidden=false;$('iniciarCamera').disabled=true;$('pararCamera').disabled=false;document.body.classList.add('camera-mode');$('scanner').scrollIntoView({behavior:'smooth',block:'start'});
- try{
-  scanner=new Html5Qrcode('scanner');const cams=await Html5Qrcode.getCameras();if(!cams.length)throw Error('Nenhuma câmera encontrada');
-  const cam=cams.find(c=>/back|rear|environment|traseira/i.test(c.label))||cams[cams.length-1];
-  await scanner.start(cam.id,{fps:12,qrbox:{width:280,height:150},aspectRatio:1.777},txt=>conferir(txt,'camera'),()=>{});
-  cameraLigada=true;resultado('Scanner ligado. Leia vários pacotes; a câmera continuará aberta.')
- }catch(err){resultado('Não consegui abrir a câmera: '+err.message+'. Ela precisa de página HTTPS e permissão de acesso.',true);$('iniciarCamera').disabled=false;$('pararCamera').disabled=true;document.body.classList.remove('camera-mode');if(scanner){try{await scanner.clear()}catch(e){}scanner=null}$('scanner').hidden=true}
+
+$('codigo').addEventListener('keydown',e=>{
+ if(e.key==='Enter'){
+  e.preventDefault();
+  conferir($('codigo').value);
+ }
 });
-async function pararScanner(){if(scanner){try{if(cameraLigada)await scanner.stop()}catch(e){}try{await scanner.clear()}catch(e){}}scanner=null;cameraLigada=false;$('scanner').hidden=true;$('iniciarCamera').disabled=false;$('pararCamera').disabled=true;document.body.classList.remove('camera-mode');resultado('Scanner parado.')}
+
+// Inicialização da câmera
+$('iniciarCamera').addEventListener('click',async()=>{
+ if(!pedidos.length){
+  resultado('Importe a planilha antes de abrir o scanner.',true);
+  return;
+ }
+
+ if(cameraLigada)return;
+
+ if(!window.Html5Qrcode){
+  resultado('Leitor não carregado. Verifique a internet.',true);
+  return;
+ }
+
+ $('iniciarCamera').disabled=true;
+ $('pararCamera').disabled=false;
+ $('scanner').hidden=false;
+ document.body.classList.add('camera-mode');
+ $('scanner').scrollIntoView({behavior:'smooth',block:'start'});
+
+ try{
+  if(scanner){
+   try{await scanner.clear();}catch(e){}
+   scanner=null;
+  }
+
+  const formatos=[
+   Html5QrcodeSupportedFormats.CODE_128,
+   Html5QrcodeSupportedFormats.CODE_39,
+   Html5QrcodeSupportedFormats.CODE_93,
+   Html5QrcodeSupportedFormats.EAN_13,
+   Html5QrcodeSupportedFormats.EAN_8,
+   Html5QrcodeSupportedFormats.UPC_A,
+   Html5QrcodeSupportedFormats.UPC_E,
+   Html5QrcodeSupportedFormats.ITF,
+   Html5QrcodeSupportedFormats.QR_CODE,
+   Html5QrcodeSupportedFormats.DATA_MATRIX
+  ];
+
+  scanner=new Html5Qrcode('scanner',{
+   formatsToSupport:formatos,
+   verbose:false
+  });
+
+  await scanner.start(
+   {facingMode:'environment'},
+   {
+    fps:15,
+    qrbox:(w,h)=>({
+     width:Math.max(150,Math.floor(Math.min(w*0.9,400))),
+     height:Math.max(80,Math.floor(Math.min(h*0.45,180)))
+    }),
+    aspectRatio:1.777
+   },
+   texto=>conferir(texto,'camera'),
+   ()=>{}
+  );
+
+  cameraLigada=true;
+  resultado('Scanner ligado. Aponte para o código de barras.');
+
+ }catch(err){
+  cameraLigada=false;
+  resultado('Não consegui abrir a câmera: '+(err.message||err)+
+   '. Verifique a permissão da câmera e se o endereço usa HTTPS.',true);
+
+  if(scanner){
+   try{await scanner.clear();}catch(e){}
+   scanner=null;
+  }
+
+  $('scanner').hidden=true;
+  $('iniciarCamera').disabled=false;
+  $('pararCamera').disabled=true;
+  document.body.classList.remove('camera-mode');
+ }
+});
+
+async function pararScanner(){
+ if(scanner){
+  try{
+   if(cameraLigada)await scanner.stop();
+  }catch(e){}
+  try{await scanner.clear();}catch(e){}
+ }
+
+ scanner=null;
+ cameraLigada=false;
+ $('scanner').hidden=true;
+ $('iniciarCamera').disabled=false;
+ $('pararCamera').disabled=true;
+ document.body.classList.remove('camera-mode');
+ resultado('Scanner parado.');
+}
+
 $('pararCamera').addEventListener('click',pararScanner);
 
-$('limparHistorico').addEventListener('click',()=>{
- const bipados=pedidos.filter(p=>p.status==='Conferido').length;
- if(!bipados){alert('Não há histórico de pacotes bipados para limpar.');return}
- if(!confirm('Limpar o histórico e reiniciar a conferência desta rota? Os pedidos importados continuam no aplicativo, mas os pacotes voltarão a ficar pendentes.'))return;
- pedidos.forEach(p=>{p.status='Pendente';p.numeroPacote=null;p.parada=null});
- salvarEstado();$('numeroVisor').textContent='PACOTE —';$('textoVisor').textContent='Histórico limpo. Pronto para começar novamente.';resultado('Histórico apagado. Os pedidos importados foram mantidos e podem ser bipados novamente.');atualizar()
+function atualizar(){
+ $('total').textContent=pedidos.length;
+ $('lidos').textContent=pedidos.filter(p=>p.status==='Conferido').length;
+ $('pendentes').textContent=pedidos.filter(p=>p.status!=='Conferido').length;
+
+ const fm=$('filtroMotorista').value;
+ const fs=$('filtroStatus').value;
+ const q=normalizar($('filtro').value);
+
+ const lista=pedidos.filter(p=>{
+  const t=normalizar([p.codigo,valor(p,'destinatario'),
+   endereco(p),valor(p,'cep')].join(' '));
+  return (!q||t.includes(q))&&(!fm||p.motorista===fm)&&
+   (!fs||p.status===fs);
+ }).sort((a,b)=>(Number(a.parada)||Infinity)-(Number(b.parada)||Infinity));
+
+ $('tabela').innerHTML='';
+
+ if(!lista.length){
+  $('tabela').innerHTML='<tr><td colspan="8">Nenhum pedido encontrado.</td></tr>';
+ }else{
+  lista.forEach(p=>{
+   const tr=document.createElement('tr');
+   const td=document.createElement('td');
+   const ck=document.createElement('input');
+
+   ck.type='checkbox';
+   ck.className='pedidoCheck';
+   ck.value=p.id;
+   td.appendChild(ck);
+   tr.appendChild(td);
+
+   const n=document.createElement('td');
+   if(p.parada){
+    const b=document.createElement('span');
+    b.className='route-number';
+    b.textContent=p.parada;
+    n.appendChild(b);
+   }else n.textContent='—';
+   tr.appendChild(n);
+
+   [p.codigo,valor(p,'destinatario'),endereco(p),
+    valor(p,'cep'),p.motorista||'Não atribuído',p.status].forEach((v,i)=>{
+     const c=document.createElement('td');
+     if(i===5&&v==='Conferido'){
+      const b=document.createElement('span');
+      b.className='status';
+      b.textContent=v;
+      c.appendChild(b);
+     }else c.textContent=v||'—';
+     tr.appendChild(c);
+    });
+
+   $('tabela').appendChild(tr);
+  });
+ }
+
+ const nomes=motoristas.map(m=>m.nome);
+
+ ['filtroMotorista','destinoMotorista'].forEach(id=>{
+  const sel=$(id);
+  const ant=sel.value;
+  sel.innerHTML='<option value="">'+
+   (id==='filtroMotorista'?'Todos os motoristas':'Selecione o motorista')+
+   '</option>';
+
+  nomes.forEach(n=>{
+   const o=document.createElement('option');
+   o.value=n;o.textContent=n;
+   sel.appendChild(o);
+  });
+
+  if(nomes.includes(ant))sel.value=ant;
+ });
+
+ $('listaMotoristas').textContent=nomes.length?
+  nomes.join(' • '):'Nenhum motorista cadastrado.';
+
+ atualizarListaScanner();
+}
+
+$('adicionarMotorista').addEventListener('click',()=>{
+ const nome=$('nomeMotorista').value.trim();
+ if(!nome)return alert('Digite o nome do motorista.');
+
+ if(motoristas.some(m=>normalizar(m.nome)===normalizar(nome)))
+  return alert('Esse motorista já está cadastrado.');
+
+ motoristas.push({nome});
+ $('nomeMotorista').value='';
+ salvarEstado();
+ atualizar();
 });
 
-function atualizar(){
- $('total').textContent=pedidos.length;$('lidos').textContent=pedidos.filter(p=>p.status==='Conferido').length;$('pendentes').textContent=pedidos.filter(p=>p.status!=='Conferido').length;
- const fm=$('filtroMotorista').value,fs=$('filtroStatus').value,q=normalizar($('filtro').value);
- const lista=pedidos.filter(p=>{const t=normalizar([p.codigo,valor(p,'destinatario'),endereco(p),valor(p,'cep')].join(' '));return(!q||t.includes(q))&&(!fm||p.motorista===fm)&&(!fs||p.status===fs)}).sort((a,b)=>(Number(a.parada)||Infinity)-(Number(b.parada)||Infinity));
- $('tabela').innerHTML='';
- if(!lista.length)$('tabela').innerHTML='<tr><td colspan="8">Nenhum pedido encontrado.</td></tr>';
- else lista.forEach(p=>{
-  const tr=document.createElement('tr'),td=document.createElement('td'),ck=document.createElement('input');ck.type='checkbox';ck.className='pedidoCheck';ck.value=p.id;td.appendChild(ck);tr.appendChild(td);
-  const n=document.createElement('td');if(p.parada){const b=document.createElement('span');b.className='route-number';b.textContent=p.parada;n.appendChild(b)}else n.textContent='—';tr.appendChild(n);
-  [p.codigo,valor(p,'destinatario'),endereco(p),valor(p,'cep'),p.motorista||'Não atribuído',p.status].forEach((v,i)=>{const c=document.createElement('td');if(i===5&&v==='Conferido'){const b=document.createElement('span');b.className='status';b.textContent=v;c.appendChild(b)}else c.textContent=v||'—';tr.appendChild(c)});
-  $('tabela').appendChild(tr)
- });
- const nomes=motoristas.map(m=>m.nome);
- ['filtroMotorista','destinoMotorista'].forEach(id=>{const sel=$(id),ant=sel.value;sel.innerHTML='<option value="">'+(id==='filtroMotorista'?'Todos os motoristas':'Selecione o motorista')+'</option>';nomes.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;sel.appendChild(o)});if(nomes.includes(ant))sel.value=ant});
- $('listaMotoristas').textContent=nomes.length?nomes.join(' • '):'Nenhum motorista cadastrado.';
- atualizarListaScanner()
-}
-$('adicionarMotorista').addEventListener('click',()=>{const nome=$('nomeMotorista').value.trim();if(!nome)return alert('Digite o nome do motorista.');if(motoristas.some(m=>normalizar(m.nome)===normalizar(nome)))return alert('Esse motorista já está cadastrado.');motoristas.push({nome});$('nomeMotorista').value='';salvarEstado();atualizar()});
-$('atribuir').addEventListener('click',()=>{const nome=$('destinoMotorista').value;if(!nome)return alert('Selecione um motorista.');const ids=[...document.querySelectorAll('.pedidoCheck:checked')].map(c=>Number(c.value));if(!ids.length)return alert('Marque pelo menos um pedido.');pedidos.filter(p=>ids.includes(Number(p.id))).forEach(p=>p.motorista=nome);salvarEstado();atualizar();resultado(ids.length+' pedido(s) atribuído(s) a '+nome+'.')});
-$('todos').addEventListener('change',()=>document.querySelectorAll('.pedidoCheck').forEach(c=>c.checked=$('todos').checked));
-['filtro','filtroMotorista','filtroStatus'].forEach(id=>$(id).addEventListener(id==='filtro'?'input':'change',atualizar));
+$('atribuir').addEventListener('click',()=>{
+ const nome=$('destinoMotorista').value;
+ if(!nome)return alert('Selecione um motorista.');
 
+ const ids=[...document.querySelectorAll('.pedidoCheck:checked')]
+  .map(c=>String(c.value));
+
+ if(!ids.length)return alert('Marque pelo menos um pedido.');
+
+ pedidos.filter(p=>ids.includes(String(p.id)))
+  .forEach(p=>p.motorista=nome);
+
+ salvarEstado();
+ atualizar();
+ resultado(ids.length+' pedido(s) atribuído(s) a '+nome+'.');
+});
+
+$('todos').addEventListener('change',()=>{
+ document.querySelectorAll('.pedidoCheck')
+  .forEach(c=>c.checked=$('todos').checked);
+});
+
+['filtro','filtroMotorista','filtroStatus'].forEach(id=>{
+ $(id).addEventListener(id==='filtro'?'input':'change',atualizar);
+});
+
+// Exportação para o Circuit
 function exportarCircuito(){
  const conferidos=pedidos.filter(p=>p.status==='Conferido');
- if(!conferidos.length){alert('Nenhum pacote foi bipado ainda. Bipe os pacotes que deseja enviar ao Circuit.');return}
- const grupos=agruparParadas(conferidos),paradaPorId=new Map();
- grupos.forEach((grupo,i)=>grupo.forEach(p=>paradaPorId.set(String(p.id),i+1)));
- // Uma linha por pacote bipado; Stop Number idêntico para todos os pacotes no mesmo endereço.
- const linhas=[['Order ID','Name','Address','Postal Code','Stop Number','Notes']];
- conferidos.sort((a,b)=>(Number(a.numeroPacote)||0)-(Number(b.numeroPacote)||0)).forEach(p=>{
-  const nome='Pacote '+p.numeroPacote;
-  linhas.push([p.codigo,nome,endereco(p),valor(p,'cep'),paradaPorId.get(String(p.id))||'',nome])
+
+ if(!conferidos.length){
+  alert('Nenhum pacote foi bipado ainda.');
+  return;
+ }
+
+ const grupos=agruparParadas(conferidos);
+ const paradaPorId=new Map();
+
+ grupos.forEach((grupo,i)=>{
+  grupo.forEach(p=>paradaPorId.set(String(p.id),i+1));
  });
- const csv='\uFEFF'+linhas.map(l=>l.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
- const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
- const a=document.createElement('a');a.href=url;a.download='rota-paty-para-circuit.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
- resultado('Arquivo gerado com somente '+conferidos.length+' pacote(s) bipado(s), agrupados em '+grupos.length+' parada(s).')
+
+ const linhas=[['Order ID','Name','Address','Postal Code','Stop Number','Notes']];
+
+ conferidos.forEach(p=>{
+  const numero=p.numeroPacote||'';
+  linhas.push([
+   p.codigo,
+   'Pacote '+numero,
+   endereco(p),
+   valor(p,'cep'),
+   paradaPorId.get(String(p.id))||'',
+   'Pacote '+numero
+  ]);
+ });
+
+ const csv='\uFEFF'+linhas.map(l=>
+  l.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')
+ ).join('\r\n');
+
+ const url=URL.createObjectURL(
+  new Blob([csv],{type:'text/csv;charset=utf-8;'})
+ );
+
+ const a=document.createElement('a');
+ a.href=url;
+ a.download='rota-paty-para-circuit.csv';
+ document.body.appendChild(a);
+ a.click();
+ a.remove();
+
+ setTimeout(()=>URL.revokeObjectURL(url),2000);
+
+ resultado('Arquivo gerado com '+conferidos.length+
+  ' pacote(s), agrupados em '+grupos.length+' parada(s).');
 }
-$('exportarScanner').addEventListener('click',exportarCircuito);$('exportar').addEventListener('click',exportarCircuito);
+
+$('exportarScanner').addEventListener('click',exportarCircuito);
+$('exportar').addEventListener('click',exportarCircuito);
+
 atualizar();
 </script>
 </body>
