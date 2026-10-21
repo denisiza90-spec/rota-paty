@@ -189,7 +189,7 @@ try {
 }
 
 // Carregar Chave Gemini salva
-$('apiKeyGemini').value=localStorage.getItem('rotaPaty_geminiKey')||'';
+$('apiKeyGemini').value = $('apiKeyGemini').value=localStorage.getItem('rotaPaty_geminiKey')||'';
 if($('apiKeyGemini').value){$('statusIA').textContent='✅ Chave do Gemini ativa! Os endereços serão corrigidos ao bipar.';
 }
 
