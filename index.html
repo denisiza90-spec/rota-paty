@@ -2,7 +2,7 @@
 <html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Rota Paty</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
-:root{font-family:Arial,sans-serif;color:#172033;background:#f1f5f9}*{box-sizing:border-box}body{margin:0}header{background:#123b70;color:white;padding:22px}header h1{margin:0 0 6px}main{max-width:1100px;margin:auto;padding:18px}.card{background:white;padding:20px;margin-bottom:16px;border-radius:12px;box-shadow:0 2px 8px #0001}h2{font-size:19px;margin-top:0}input,select{padding:11px;border:1px solid #cbd5e1;border-radius:7px;max-width:100%;font-size:15px}button{padding:11px 15px;border:0;border-radius:7px;background:#1769d2;color:white;cursor:pointer;font-size:14px}button.secondary{background:#475569}button.ai-btn{background:#7c3aed;font-weight:bold}button:disabled{opacity:.5;cursor:not-allowed}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row input{flex:1;min-width:160px}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.stat{background:#eaf2ff;padding:13px;border-radius:9px}.stat strong{font-size:24px;display:block}.small{font-size:13px;color:#64748b}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:10px;border-bottom:1px solid #e2e8f0;vertical-align:top}th{background:#f8fafc}.status{display:inline-block;background:#dcfce7;color:#166534;padding:4px 7px;border-radius:5px}.error{color:#b91c1c}#mensagem,#resultado{margin-top:12px;overflow-wrap:anywhere}#scanner{width:100%;max-width:520px;margin-top:0}#scanner video{border-radius:8px;display:block;width:100%;object-fit:cover}.scan-workspace{position:relative;width:100%;max-width:720px;margin:12px auto 0}#visorPacote{position:absolute;z-index:5;top:12px;right:12px;max-width:58%;background:#0f172aee;color:#fff;border:2px solid #fff;border-radius:12px;padding:10px 13px;margin:0;text-align:center;box-shadow:0 3px 12px #0005;pointer-events:none}#visorPacote strong{display:block;font-size:clamp(19px,5vw,30px);letter-spacing:.3px;line-height:1.1}#visorPacote span{display:block;color:#e2e8f0;font-size:12px;margin-top:5px;overflow-wrap:anywhere}body.camera-mode main>section:not(:nth-of-type(3)){display:none}body.camera-mode main{padding-top:10px}body.camera-mode header{padding:10px 16px}body.camera-mode header h1{font-size:20px;margin-bottom:2px}body.camera-mode header div{font-size:12px}.route-number{display:inline-block;background:#dbeafe;color:#1d4ed8;font-weight:bold;padding:4px 8px;border-radius:6px}#visorPacote{background:#0f172a;color:#fff;border-radius:14px;padding:18px;margin:12px 0;text-align:center}#visorPacote strong{display:block;font-size:34px;letter-spacing:.5px}#visorPacote span{display:block;color:#cbd5e1;margin-top:5px}
+:root{font-family:Arial,sans-serif;color:#172033;background:#f1f5f9}*{box-sizing:border-box}body{margin:0}header{background:#123b70;color:white;padding:22px}header h1{margin:0 0 6px}main{max-width:1100px;margin:auto;padding:18px}.card{background:white;padding:20px;margin-bottom:16px;border-radius:12px;box-shadow:0 2px 8px #0001}h2{font-size:19px;margin-top:0}input,select{padding:11px;border:1px solid #cbd5e1;border-radius:7px;max-width:100%;font-size:15px}button{padding:11px 15px;border:0;border-radius:7px;background:#1769d2;color:white;cursor:pointer;font-size:14px}button.secondary{background:#475569}button:disabled{opacity:.5;cursor:not-allowed}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row input{flex:1;min-width:160px}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.stat{background:#eaf2ff;padding:13px;border-radius:9px}.stat strong{font-size:24px;display:block}.small{font-size:13px;color:#64748b}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:10px;border-bottom:1px solid #e2e8f0;vertical-align:top}th{background:#f8fafc}.status{display:inline-block;background:#dcfce7;color:#166534;padding:4px 7px;border-radius:5px}.error{color:#b91c1c}#mensagem,#resultado{margin-top:12px;overflow-wrap:anywhere}#scanner{width:100%;max-width:520px;margin-top:0}#scanner video{border-radius:8px;display:block;width:100%;object-fit:cover}.scan-workspace{position:relative;width:100%;max-width:720px;margin:12px auto 0}#visorPacote{position:absolute;z-index:5;top:12px;right:12px;max-width:58%;background:#0f172aee;color:#fff;border:2px solid #fff;border-radius:12px;padding:10px 13px;margin:0;text-align:center;box-shadow:0 3px 12px #0005;pointer-events:none}#visorPacote strong{display:block;font-size:clamp(19px,5vw,30px);letter-spacing:.3px;line-height:1.1}#visorPacote span{display:block;color:#e2e8f0;font-size:12px;margin-top:5px;overflow-wrap:anywhere}body.camera-mode main>section:not(:nth-of-type(3)){display:none}body.camera-mode main{padding-top:10px}body.camera-mode header{padding:10px 16px}body.camera-mode header h1{font-size:20px;margin-bottom:2px}body.camera-mode header div{font-size:12px}.route-number{display:inline-block;background:#dbeafe;color:#1d4ed8;font-weight:bold;padding:4px 8px;border-radius:6px}#visorPacote{background:#0f172a;color:#fff;border-radius:14px;padding:18px;margin:12px 0;text-align:center}#visorPacote strong{display:block;font-size:34px;letter-spacing:.5px}#visorPacote span{display:block;color:#cbd5e1;margin-top:5px}
 #exportarScanner{width:100%;margin-top:10px;background:#0f766e;font-weight:bold}
 #scannerLista{margin-top:14px;background:#fff;border:1px solid #dbe3ed;border-radius:10px;overflow:hidden}
 #scannerLista h3{font-size:16px;margin:0;padding:12px;background:#f1f5f9}
@@ -12,23 +12,21 @@
 .scan-order .order-title{font-weight:bold;overflow-wrap:anywhere}
 .scan-order .order-address{font-size:13px;color:#475569;margin-top:3px;overflow-wrap:anywhere}
 .scan-order .order-number{display:inline-block;background:#dbeafe;color:#1d4ed8;border-radius:5px;padding:2px 6px;margin-right:5px}
-.ai-box{background:#f5f3ff;border:1px solid #ddd6fe;padding:14px;border-radius:10px;margin-top:12px}
+.ai-box{background:#f5f3ff;border:1px solid #ddd6fe;padding:12px;border-radius:8px;margin-top:10px}
 @media(max-width:600px){main{padding:10px}.card{padding:14px}.stats{grid-template-columns:1fr 1fr}header{padding:16px}}
 </style></head><body><header><h1>🚚 Rota Paty</h1><div>Controle de pacotes, entregas e motoristas</div></header><main>
 <section class="card">
-<h2>1. Importar planilha de entregas e Gemini</h2>
-<p>Selecione a Carta de Porte em Excel (.xlsx, .xls) ou CSV.</p>
-<input type="file" id="arquivo" accept=".xlsx,.xls,.csv">
-<div id="mensagem" aria-live="polite">Nenhuma planilha importada.</div>
-
-<div class="ai-box">
-  <strong>✨ Inteligência Artificial Gemini (Correção de Endereços)</strong>
-  <p class="small" style="margin:4px 0 8px">Cole sua chave do Google AI Studio abaixo. Ela é salva automaticamente no aparelho.</p>
-  <div class="row">
-    <input type="password" id="apiKeyGemini" placeholder="Cole aqui sua chave começando com AIza...">
+  <h2>1. Importar planilha de entregas</h2>
+  <p>Selecione a Carta de Porte em Excel (.xlsx, .xls) ou CSV.</p>
+  <input type="file" id="arquivo" accept=".xlsx,.xls,.csv">
+  <div id="mensagem" aria-live="polite">Nenhuma planilha importada.</div>
+  
+  <div class="ai-box">
+    <strong>✨ Chave da Inteligência Artificial (Gemini)</strong>
+    <p class="small" style="margin:4px 0 6px">Cole sua chave do Google AI Studio abaixo. Ela é salva automaticamente no aparelho.</p>
+    <input type="password" id="apiKeyGemini" placeholder="Cole aqui sua chave começando com AIza..." style="width:100%">
+    <div id="statusIA" class="small" style="margin-top:4px;color:#5b21b6;font-weight:bold"></div>
   </div>
-  <div id="statusIA" class="small" style="margin-top:6px;color:#5b21b6;font-weight:bold"></div>
-</div>
 </section>
 
 <section class="card"><h2>2. Resumo da operação</h2><div class="stats"><div class="stat"><strong id="total">0</strong><span>Pedidos importados</span></div><div class="stat"><strong id="pendentes">0</strong><span>Pacotes pendentes</span></div><div class="stat"><strong id="lidos">0</strong><span>Pacotes conferidos</span></div></div></section>
@@ -38,10 +36,9 @@
 <script>
 const $=id=>document.getElementById(id);let pedidos=JSON.parse(localStorage.getItem('rotaPaty_pedidos')||'[]'),motoristas=JSON.parse(localStorage.getItem('rotaPaty_motoristas')||'[]'),colunas=JSON.parse(localStorage.getItem('rotaPaty_colunas')||'{}'),scanner=null,cameraLigada=false,ultimaLeitura='',ultimaLeituraEm=0,processando=false;
 
-// Gerenciamento da Chave do Gemini
+// Salvar chave do Gemini na memória automaticamente
 $('apiKeyGemini').value=localStorage.getItem('rotaPaty_geminiKey')||'';
 if($('apiKeyGemini').value)$('statusIA').textContent='✅ Chave do Gemini ativa!';
-
 $('apiKeyGemini').addEventListener('input',()=>{
  const k=$('apiKeyGemini').value.trim();
  localStorage.setItem('rotaPaty_geminiKey',k);
@@ -65,9 +62,38 @@ function obterOuCriarParada(pedidoAtual){
 
 function chaveEndereco(p){const base=limparComplementosEndereco(valor(p,'endereco'));const partes=[base,valor(p,'distrito'),valor(p,'cidade'),valor(p,'estado'),valor(p,'cep')].map(x=>String(x||'').trim()).filter(Boolean);if(!partes.length)return '';return normalizar(partes.join('|')).replace(/[^a-z0-9|]/g,'')}function agruparParadas(lista){const grupos=new Map();for(const p of lista){const k=chaveEndereco(p)||('pedido-individual:'+p.codigo);if(!grupos.has(k))grupos.set(k,[]);grupos.get(k).push(p)}return [...grupos.values()]}function acharPedido(c){c=normalizar(c);return pedidos.find(p=>normalizar(p.codigo)===c)||pedidos.find(p=>normalizar(p.codigo).includes(c)||c.includes(normalizar(p.codigo)))||null}
 function tocarBip(){try{const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return;const ctx=new AudioCtx();const osc=ctx.createOscillator();const ganho=ctx.createGain();osc.type='sine';osc.frequency.setValueAtTime(880,ctx.currentTime);ganho.gain.setValueAtTime(0.0001,ctx.currentTime);ganho.gain.exponentialRampToValueAtTime(0.22,ctx.currentTime+0.015);ganho.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.18);osc.connect(ganho);ganho.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+0.19);osc.onended=()=>ctx.close()}catch(e){}}
-function atualizarListaScanner(){const box=$('scannerListaItens');if(!box)return;box.innerHTML='';if(!pedidos.length){box.innerHTML='<div class="scan-order"><span class="check pending">□</span><div>Importe a planilha para listar os pacotes aqui.</div></div>';return}const grupos=agruparParadas(pedidos);grupos.forEach(grupo=>{const row=document.createElement('div');row.className='scan-order';const completo=grupo.every(p=>p.status==='Conferido');const check=document.createElement('span');check.className='check '+(completo?'':'pending');check.textContent=completo?'✓':'□';const info=document.createElement('div');const title=document.createElement('div');title.className='order-title';const nums=grupo.map(p=>p.numeroPacote?'Pacote '+p.numeroPacote:'Pendente').join(', ');title.textContent=(grupo[0].corrigidoIA?'✨ ':'')+nums;const address=document.createElement('div');address.className='order-address';address.textContent=endereco(grupo[0])||'Endereço não informado';info.appendChild(title);info.appendChild(address);row.appendChild(check);row.appendChild(info);box.appendChild(row)})}
 
-// CORREÇÃO AUTOMÁTICA COM GEMINI AO BIPAR
+function atualizarListaScanner(){
+ const box=$('scannerListaItens');
+ if(!box)return;
+ box.innerHTML='';
+ if(!pedidos.length){
+  box.innerHTML='<div class="scan-order"><span class="check pending">□</span><div>Importe a planilha para listar os pacotes aqui.</div></div>';
+  return;
+ }
+ const grupos=agruparParadas(pedidos);
+ grupos.forEach(grupo=>{
+  const row=document.createElement('div');
+  row.className='scan-order';
+  const completo=grupo.every(p=>p.status==='Conferido');
+  const check=document.createElement('span');
+  check.className='check '+(completo?'':'pending');
+  check.textContent=completo?'✓':'□';
+  const info=document.createElement('div');
+  const title=document.createElement('div');
+  title.className='order-title';
+  const nums=grupo.map(p=>p.numeroPacote?'Pacote '+p.numeroPacote:'Pendente').join(', ');
+  title.textContent=(grupo[0].corrigidoIA?'✨ ':'')+nums;
+  const address=document.createElement('div');
+  address.className='order-address';
+  address.textContent=endereco(grupo[0])||'Endereço não informado';
+  info.appendChild(title);info.appendChild(address);
+  row.appendChild(check);row.appendChild(info);
+  box.appendChild(row);
+ });
+}
+
+// CORREÇÃO DO ENDEREÇO COM GEMINI EM SEGUNDO PLANO
 async function corrigirEnderecoNoBip(pedido){
  const apiKey=localStorage.getItem('rotaPaty_geminiKey');
  if(!apiKey || pedido.corrigidoIA) return;
@@ -135,7 +161,7 @@ function conferir(c,origem='manual'){
  resultado((ja?'Pacote já conferido':'Pacote conferido')+' — PACOTE '+p.numeroPacote+' | '+(endereco(p)||'Endereço não informado'));
  tocarBip();
  
- // Aciona o Gemini em segundo plano para limpar o endereço
+ // Aciona a IA de forma limpa sem atrapalhar o bip
  corrigirEnderecoNoBip(p);
 
  $('codigo').value='';
@@ -167,7 +193,7 @@ function exportarCircuito(){
   const grupo=grupoPorId.get(String(p.id))||[p];
   const pacotesDoEndereco=grupo.map(x=>x.numeroPacote).filter(Boolean).join(', ');
   const dest=valor(p,'destinatario');
-  const notas='Pacote '+(p.numeroPacote||'')+(grupo.length>1?' (Junto com pct: '+pacotesDoEndereco+')':'')+(dest?' | Cliente: '+dest:'');
+  const notas='Pacote '+(p.numeroPacote||'')+(grupo.length>1?' (Junto com pct: '+pacotesDoEndingrc||pacotesDoEndereco+')':'')+(dest?' | Cliente: '+dest:'');
   linhas.push([p.codigo,dest||('Pacote '+p.numeroPacote),endereco(p),valor(p,'cep'),paradaPorId.get(String(p.id))||'',notas]);
  });
  const csv='\uFEFF'+linhas.map(l=>l.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
