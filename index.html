@@ -227,7 +227,6 @@ function descobrirColunas(headers){
  const comp=loc('complemento','apartamento','numero do imovel',
   'numero do endereco','complement');
 
- // BLINDAGEM MÁXIMA PARA ACHAR O CÓDIGO DA PLANILHA
  const pedidoEncontrado = loc('numero de pedido jms','numero do pedido jms',
   'numero de pedido','codigo de barras','barcode','rastreamento',
   'tracking','order id','pedido','codigo','id','numero') || h[0]?.original;
@@ -553,6 +552,7 @@ $('limparTudo').addEventListener('click',()=>{
  }
 });
 
+// IMPORTAÇÃO BLINDADA DE EXCEL E CSV
 $('arquivo').addEventListener('change',async e=>{
  const f=e.target.files[0];
  if(!f)return;
@@ -564,7 +564,6 @@ $('arquivo').addEventListener('change',async e=>{
 
  try{
   let wb;
-
   if(f.name.toLowerCase().endsWith('.csv')){
    wb=XLSX.read(await f.text(),{type:'string'});
   }else{
@@ -572,28 +571,48 @@ $('arquivo').addEventListener('change',async e=>{
   }
 
   const aba=wb.SheetNames[0];
-  const linhas=XLSX.utils.sheet_to_json(wb.Sheets[aba],{
+  const worksheet=wb.Sheets[aba];
+  const linhas=XLSX.utils.sheet_to_json(worksheet,{
    defval:'',
-   raw:false
+   raw:false,
+   header:1
   });
 
-  if(!linhas.length){
-   msg('Planilha vazia ou sem linhas de dados.',true);
+  if(!linhas.length || linhas.length<2){
+   msg('Planilha vazia ou sem dados suficientes.',true);
    return;
   }
 
-  descobrirColunas(Object.keys(linhas[0]));
+  let cabecalhoIndex=0;
+  for(let i=0; i<Math.min(linhas.length,5); i++){
+   const linhaStr=JSON.stringify(linhas[i]).toLowerCase();
+   if(linhaStr.includes('pedido') || linhaStr.includes('codigo') || linhaStr.includes('endereco') || linhaStr.includes('destinatario')){
+    cabecalhoIndex=i;
+    break;
+   }
+  }
 
-  if(!colunas.pedido){
-   msg('Não encontrei a coluna do código. Cabeçalhos: '+
-    Object.keys(linhas[0]).join(', '),true);
+  const headers=linhas[cabecalhoIndex];
+  const dadosBrutos=linhas.slice(cabecalhoIndex+1).map(row=>{
+   const obj={};
+   headers.forEach((h,index)=>{
+    obj[String(h).trim()]=row[index]!==undefined?row[index]:'';
+   });
+   return obj;
+  }).filter(row=>Object.values(row).some(val=>String(val).trim()!==''));
+
+  if(!dadosBrutos.length){
+   msg('Não foram encontrados dados válidos após o cabeçalho.',true);
    return;
   }
+
+  descobrirColunas(Object.keys(dadosBrutos[0]));
 
   const antigos=new Map(pedidos.map(p=>[normalizar(p.codigo),p]));
 
-  pedidos=linhas.map((dados,i)=>{
-   const codigo=String(dados[colunas.pedido]??'').trim();
+  pedidos=dadosBrutos.map((dados,i)=>{
+   const chaveColPedido=colunas.pedido||Object.keys(dados)[0];
+   const codigo=String(dados[chaveColPedido]??'').trim();
    const antigo=antigos.get(normalizar(codigo));
 
    return {
@@ -616,8 +635,13 @@ $('arquivo').addEventListener('change',async e=>{
    };
   }).filter(p=>p.codigo);
 
+  if(!pedidos.length){
+   msg('A planilha foi lida, mas nenhum código válido foi encontrado.',true);
+   return;
+  }
+
   salvarEstado();
-  msg('Importação concluída: '+pedidos.length+' pedidos, aba '+aba+'.');
+  msg('Sucesso! Importados '+pedidos.length+' pedidos.');
   atualizar();
 
  }catch(err){
