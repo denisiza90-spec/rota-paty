@@ -19,6 +19,7 @@ input,select{padding:11px;border:1px solid #cbd5e1;border-radius:7px;max-width:1
 button{padding:12px 15px;border:0;border-radius:7px;background:#1769d2;color:white;font-size:14px;cursor:pointer;font-weight:bold}
 button.secondary{background:#475569}
 button.danger{background:#dc2626;font-size:13px;padding:9px 12px}
+button.ai-btn{background:#7c3aed}
 button:disabled{opacity:.5;cursor:not-allowed}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .row input{flex:1;min-width:150px}
@@ -49,6 +50,7 @@ th{background:#f8fafc}
 .order-address{font-size:14px;color:#166534;margin-top:6px;font-weight:bold;overflow-wrap:anywhere}
 .route-number{background:#dbeafe;color:#1d4ed8;font-weight:bold;padding:4px 8px;border-radius:6px;display:inline-block}
 .pkg-badge{background:#fef3c7;color:#92400e;font-weight:bold;padding:3px 7px;border-radius:5px;display:inline-block;margin-left:4px;font-size:12px}
+.ai-box{background:#f5f3ff;border:1px solid #ddd6fe;padding:12px;border-radius:9px;margin-top:12px}
 @media(max-width:600px){
  main{padding:8px}.card{padding:12px}
  header{padding:12px}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -72,11 +74,21 @@ body.camera-mode header div{font-size:12px}
 
 <main>
 <section class="card">
-<h2>1. Importar planilha de entregas</h2>
+<h2>1. Importar planilha e Configurar Gemini</h2>
 <p>Selecione a Carta de Porte original em Excel ou CSV.</p>
 <input type="file" id="arquivo" accept=".xlsx,.xls,.csv">
 <div id="mensagem" aria-live="polite">Nenhuma planilha importada.</div>
-<p class="small">É necessário ter internet para carregar as bibliotecas.</p>
+
+<div class="ai-box">
+  <strong>✨ Inteligência Artificial Gemini (Correção de Endereços)</strong>
+  <p class="small" style="margin:4px 0 8px">Cole sua chave do Google AI Studio uma única vez. Ela ficará salva neste celular/computador e corrigirá os endereços automaticamente ao bipar.</p>
+  <div class="row">
+    <input type="password" id="apiKeyGemini" placeholder="Cole aqui sua chave começando com AIza...">
+    <button id="salvarKey" class="secondary">Salvar Chave</button>
+    <button id="corrigirLoteIA" class="ai-btn">✨ Corrigir Planilha Toda</button>
+  </div>
+  <div id="statusIA" class="small" style="margin-top:6px;color:#5b21b6;font-weight:bold"></div>
+</div>
 </section>
 
 <section class="card">
@@ -90,7 +102,7 @@ body.camera-mode header div{font-size:12px}
 
 <section class="card">
 <h2>3. Bipar ou pesquisar pacote</h2>
-<p>Use a câmera ou um leitor USB/Bluetooth. Também é possível digitar o código e pressionar Enter.</p>
+<p>Use a câmera ou um leitor USB/Bluetooth. Ao bipar, o Gemini limpa e organiza o endereço sozinho.</p>
 <div class="row">
 <input id="codigo" placeholder="Código de barras ou pedido" autocomplete="off">
 <button id="buscar">Buscar</button>
@@ -176,6 +188,17 @@ try {
  pedidos=[];motoristas=[];colunas={};
 }
 
+// Carregar Chave Gemini salva
+$('apiKeyGemini').value=localStorage.getItem('rotaPaty_geminiKey')||'';
+if($('apiKeyGemini').value){$('statusIA').textContent='✅ Chave do Gemini ativa! Os endereços serão corrigidos ao bipar.';
+}
+
+$('salvarKey').addEventListener('click',()=>{
+ const k=$('apiKeyGemini').value.trim();
+ localStorage.setItem('rotaPaty_geminiKey',k);
+ $('statusIA').textContent=k?'✅ Chave salva com sucesso!':'⚠️ Chave removida.';
+});
+
 function normalizar(s){
  return String(s??'').normalize('NFD')
  .replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
@@ -226,7 +249,6 @@ function descobrirColunas(headers){
  localStorage.setItem('rotaPaty_colunas',JSON.stringify(colunas));
 }
 
-// Remove apenas indicações de apartamento/bloco/sala para agrupar prédios sem apagar o número da casa
 function limparComplementosEndereco(texto){
  return String(texto||'')
  .replace(/\b(apartamento|apto?\.?|apart?\.?|bloco|bl\.?|torre|unidade|sala|conjunto)\s*[-:#]?\s*[a-z0-9-]+/gi,' ')
@@ -246,9 +268,7 @@ function salvarEstado(){
  try {
   localStorage.setItem('rotaPaty_pedidos',JSON.stringify(pedidos));
   localStorage.setItem('rotaPaty_motoristas',JSON.stringify(motoristas));
- } catch(e) {
-  console.warn('Limite de armazenamento atingido:', e);
- }
+ } catch(e) {}
 }
 
 function msg(t,err=false){
@@ -353,7 +373,75 @@ function tocarBip(){
  }catch(e){}
 }
 
-/* LISTA: ENDEREÇO PRIMEIRO, PACOTES ABAIXO */
+// INTEGRAÇÃO GEMINI: Corrige o endereço no momento do Bip sem travar a leitura
+async function corrigirEnderecoNoBip(pedido){
+ const apiKey=localStorage.getItem('rotaPaty_geminiKey');
+ if(!apiKey || pedido.corrigidoIA) return;
+
+ const bruto=[
+  valor(pedido,'endereco'),
+  valor(pedido,'complemento'),
+  valor(pedido,'distrito'),
+  valor(pedido,'cidade'),
+  valor(pedido,'cep')
+ ].filter(Boolean).join(', ');
+
+ const prompt=`Você é um especialista em logística de entregas no Brasil para o aplicativo Circuit.
+Padronize este endereço de etiqueta: "${bruto}"
+Retorne APENAS um JSON válido com estas chaves:
+{"ruaNumero": "Apenas nome da rua sem abreviações e número do imóvel (ex: Rua Sete de Setembro, 120). NÃO inclua apto, bloco, casa ou referência aqui", "complemento": "Apto, bloco, condomínio, casa ou ponto de referência se houver", "bairro": "Nome do bairro"}`;
+
+ try{
+  const resp=await fetch(https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey},{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({
+    contents:[{parts:[{text:prompt}]}],
+    generationConfig:{responseMimeType:"application/json",temperature:0.1}
+   })
+  });
+  if(!resp.ok) return;
+  const data=await resp.json();
+  const texto=data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if(!texto) return;
+
+  const json=JSON.parse(texto);
+  if(json.ruaNumero) pedido.campos.endereco=json.ruaNumero;
+  if(json.complemento) pedido.campos.complemento=json.complemento;
+  if(json.bairro) pedido.campos.distrito=json.bairro;
+  pedido.corrigidoIA=true;
+
+  pedido.parada=obterOuCriarParada(pedido);
+  salvarEstado();
+  atualizar();
+  $('textoVisor').textContent='✨ '+endereco(pedido)+(pedido.campos.complemento?' ('+pedido.campos.complemento+')':'');
+ }catch(e){
+  console.warn('Erro Gemini:',e);
+ }
+}
+
+// Botão para corrigir a planilha inteira de uma vez com o Gemini
+$('corrigirLoteIA').addEventListener('click',async()=>{
+ const apiKey=localStorage.getItem('rotaPaty_geminiKey');
+ if(!apiKey) return alert('Cole e salve sua Chave do Gemini primeiro!');
+ if(!pedidos.length) return alert('Importe uma planilha primeiro!');
+
+ const pendentesIA=pedidos.filter(p=>!p.corrigidoIA);
+ if(!pendentesIA.length) return alert('Todos os endereços já foram corrigidos pela IA!');
+
+ $('corrigirLoteIA').disabled=true;
+ let concluidos=0;
+
+ for(const p of pendentesIA){
+  $('statusIA').textContent=⏳ Corrigindo com Gemini: ${++concluidos} de ${pendentesIA.length}...;
+  await corrigirEnderecoNoBip(p);
+  await new Promise(r=>setTimeout(r,350)); // Pausa leve para respeitar limite gratuito
+ }
+
+ $('statusIA').textContent=✅ Todos os ${pendentesIA.length} endereços foram padronizados pelo Gemini!;
+ $('corrigirLoteIA').disabled=false;
+});
+
 function atualizarListaScanner(){
  const box=$('scannerListaItens');
  box.innerHTML='';
@@ -378,7 +466,7 @@ function atualizarListaScanner(){
 
   const title=document.createElement('div');
   title.className='order-title';
-  title.textContent=endereco(grupo[0])||'Endereço não informado';
+  title.textContent=(grupo[0].corrigidoIA?'✨ ':'')+(endereco(grupo[0])||'Endereço não informado');
 
   const address=document.createElement('div');
   address.className='order-address';
@@ -432,8 +520,7 @@ function conferir(c,origem='manual'){
  salvarEstado();
  atualizar();
 
- $('numeroVisor').textContent='PACOTE '+p.numeroPacote+' (PARADA '+p.parada+')';
- $('textoVisor').textContent=(endereco(p)||'Endereço não informado') + (valor(p,'destinatario') ? ' — ' + valor(p,'destinatario') : '');
+ $('numeroVisor').textContent='PACOTE '+p.numeroPacote+' (PARADA '+p.parada+')';$('textoVisor').textContent=(endereco(p)||'Endereço não informado') + (valor(p,'destinatario') ? ' — ' + valor(p,'destinatario') : '');
 
  const grupo=agruparParadas(pedidos).find(g=>
   g.some(item=>String(item.id)===String(p.id))
@@ -447,28 +534,26 @@ function conferir(c,origem='manual'){
  );
 
  tocarBip();
+ corrigirEnderecoNoBip(p); // Chama o Gemini em segundo plano!
  $('codigo').value='';
 
  if(origem!=='camera')$('codigo').focus();
  processando=false;
 }
 
-// BOTÃO LIMPAR TUDO / NOVA ROTA
 $('limparTudo').addEventListener('click',()=>{
  if(!pedidos.length) return alert('A lista já está vazia.');
- if(confirm('Tem certeza que deseja apagar os pedidos atuais para iniciar uma nova rota? (Os motoristas cadastrados serão mantidos)')){
+ if(confirm('Tem certeza que deseja apagar os pedidos atuais para iniciar uma nova rota?')){
   pedidos=[];
   localStorage.removeItem('rotaPaty_pedidos');
   $('arquivo').value='';
-  $('numeroVisor').textContent='PACOTE —';
-  $('textoVisor').textContent='Aguardando leitura do primeiro pacote';
+  $('numeroVisor').textContent='PACOTE —';$('textoVisor').textContent='Aguardando leitura do primeiro pacote';
   msg('Dados limpos. Importe uma nova planilha.');
   resultado('');
   atualizar();
  }
 });
 
-// IMPORTAÇÃO DE EXCEL E CSV
 $('arquivo').addEventListener('change',async e=>{
  const f=e.target.files[0];
  if(!f)return;
@@ -527,7 +612,8 @@ $('arquivo').addEventListener('change',async e=>{
     status:antigo?.status??'Pendente',
     motorista:antigo?.motorista??String(dados[colunas.motorista]??'').trim(),
     parada:antigo?.parada??null,
-    numeroPacote:antigo?.numeroPacote??null
+    numeroPacote:antigo?.numeroPacote??null,
+    corrigidoIA:antigo?.corrigidoIA??false
    };
   }).filter(p=>p.codigo);
 
@@ -549,7 +635,6 @@ $('codigo').addEventListener('keydown',e=>{
  }
 });
 
-// CÂMERA
 $('iniciarCamera').addEventListener('click',async()=>{
  if(!pedidos.length){
   resultado('Importe a planilha antes de abrir o scanner.',true);
@@ -646,7 +731,6 @@ async function pararScanner(){
 
 $('pararCamera').addEventListener('click',pararScanner);
 
-// ATUALIZAR TELA
 function atualizar(){
  $('total').textContent=pedidos.length;
  $('lidos').textContent=pedidos.filter(p=>p.status==='Conferido').length;
@@ -699,7 +783,7 @@ function atualizar(){
    }else n.textContent='—';
    tr.appendChild(n);
 
-   [p.codigo,valor(p,'destinatario'),endereco(p),
+   [p.codigo,valor(p,'destinatario'),(p.corrigidoIA?'✨ ':'')+endereco(p),
     valor(p,'cep'),p.motorista||'Não atribuído',p.status].forEach((v,i)=>{
      const c=document.createElement('td');
      if(i===5&&v==='Conferido'){
@@ -778,7 +862,6 @@ $('todos').addEventListener('change',()=>{
  $(id).addEventListener(id==='filtro'?'input':'change',atualizar);
 });
 
-// EXPORTAÇÃO PARA O CIRCUIT (1 LINHA POR PARADA OU AGRUPADO)
 function exportarCircuito(){
  const conferidos=pedidos.filter(p=>p.status==='Conferido');
 
@@ -799,13 +882,11 @@ function exportarCircuito(){
   grupo.forEach(p=>{
    const dest=valor(p,'destinatario');
    const comp=valor(p,'complemento');
-   const enderecoBruto=valor(p,'endereco');
 
    const obsPartes=[
     'PACOTE '+p.numeroPacote,
     grupo.length>1 ? '('+pacotesDoEndereco+')' : '',
     comp ? 'Comp: '+comp : '',
-    enderecoBruto && enderecoBruto!==limparComplementosEndereco(enderecoBruto) ? 'Orig: '+enderecoBruto : '',
     dest ? 'Cliente: '+dest : ''
    ].filter(Boolean);
 
@@ -842,8 +923,7 @@ function exportarCircuito(){
   ' parada(s).');
 }
 
-$('exportarScanner').addEventListener('click',exportarCircuito);
-$('exportar').addEventListener('click',exportarCircuito);
+$('exportarScanner').addEventListener('click',exportarCircuito);$('exportar').addEventListener('click',exportarCircuito);
 
 atualizar();
 </script>
