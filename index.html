@@ -10,15 +10,16 @@
 :root{font-family:Arial,sans-serif;color:#172033;background:#f1f5f9}
 *{box-sizing:border-box}
 body{margin:0}
-header{background:#123b70;color:white;padding:18px}
+header{background:#123b70;color:white;padding:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
 header h1{margin:0 0 5px;font-size:24px}
 main{max-width:1100px;margin:auto;padding:12px}
 .card{background:white;padding:16px;margin-bottom:12px;border-radius:12px;box-shadow:0 2px 8px #0001}
 h2{font-size:18px;margin-top:0}
 input,select{padding:11px;border:1px solid #cbd5e1;border-radius:7px;max-width:100%;font-size:15px}
-button{padding:12px 15px;border:0;border-radius:7px;background:#1769d2;color:white;font-size:14px;cursor:pointer}
+button{padding:12px 15px;border:0;border-radius:7px;background:#1769d2;color:white;font-size:14px;cursor:pointer;font-weight:bold}
 button.secondary{background:#475569}
-button:disabled{opacity:.5}
+button.danger{background:#dc2626;font-size:13px;padding:9px 12px}
+button:disabled{opacity:.5;cursor:not-allowed}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .row input{flex:1;min-width:150px}
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -29,16 +30,16 @@ button:disabled{opacity:.5}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{text-align:left;padding:9px;border-bottom:1px solid #e2e8f0;vertical-align:top}
 th{background:#f8fafc}
-.status{background:#dcfce7;color:#166534;padding:4px 7px;border-radius:5px}
-.error{color:#b91c1c}
+.status{background:#dcfce7;color:#166534;padding:4px 7px;border-radius:5px;font-weight:bold}
+.error{color:#b91c1c;font-weight:bold}
 #mensagem,#resultado{margin-top:10px;overflow-wrap:anywhere}
 #scanner{width:100%;max-width:600px;margin:auto}
 #scanner video{width:100%;border-radius:8px}
 .scan-workspace{position:relative;width:100%;max-width:720px;margin:10px auto}
 #visorPacote{background:#0f172a;color:white;border-radius:12px;padding:14px;margin:10px 0;text-align:center}
-#visorPacote strong{display:block;font-size:30px}
-#visorPacote span{display:block;color:#e2e8f0;font-size:13px;margin-top:5px;overflow-wrap:anywhere}
-#exportarScanner{width:100%;margin-top:8px;background:#0f766e;font-weight:bold}
+#visorPacote strong{display:block;font-size:30px;color:#38bdf8}
+#visorPacote span{display:block;color:#e2e8f0;font-size:14px;margin-top:5px;overflow-wrap:anywhere}
+#exportarScanner{width:100%;margin-top:8px;background:#0f766e}
 #scannerLista{margin-top:12px;background:white;border:1px solid #dbe3ed;border-radius:10px;overflow:hidden}
 #scannerLista h3{font-size:16px;margin:0;padding:12px;background:#f1f5f9}
 .scan-order{display:grid;grid-template-columns:26px 1fr;gap:8px;padding:12px;border-top:1px solid #e2e8f0}
@@ -46,7 +47,8 @@ th{background:#f8fafc}
 .check.pending{color:#94a3b8}
 .order-title{font-weight:bold;overflow-wrap:anywhere}
 .order-address{font-size:14px;color:#166534;margin-top:6px;font-weight:bold;overflow-wrap:anywhere}
-.route-number{background:#dbeafe;color:#1d4ed8;font-weight:bold;padding:4px 8px;border-radius:6px}
+.route-number{background:#dbeafe;color:#1d4ed8;font-weight:bold;padding:4px 8px;border-radius:6px;display:inline-block}
+.pkg-badge{background:#fef3c7;color:#92400e;font-weight:bold;padding:3px 7px;border-radius:5px;display:inline-block;margin-left:4px;font-size:12px}
 @media(max-width:600px){
  main{padding:8px}.card{padding:12px}
  header{padding:12px}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -61,8 +63,11 @@ body.camera-mode header div{font-size:12px}
 </head>
 <body>
 <header>
-<h1>🚚 Rota Paty</h1>
-<div>Controle de pacotes, entregas e motoristas</div>
+<div>
+  <h1>🚚 Rota Paty</h1>
+  <div>Controle de pacotes, entregas e motoristas</div>
+</div>
+<button id="limparTudo" class="danger" title="Apagar pacotes atuais para iniciar nova rota">🗑️ Nova Rota</button>
 </header>
 
 <main>
@@ -109,7 +114,7 @@ body.camera-mode header div{font-size:12px}
 <h3>Pacotes e endereços</h3>
 <div id="scannerListaItens">Importe a planilha para começar.</div>
 </div>
-<p class="small">✓ verde significa pacote conferido. Os números dos pacotes são sequenciais.</p>
+<p class="small">✓ verde significa endereço 100% conferido. Os números dos pacotes são sequenciais.</p>
 </section>
 
 <section class="card">
@@ -124,7 +129,7 @@ body.camera-mode header div{font-size:12px}
 <section class="card">
 <h2>5. Pedidos e rotas</h2>
 <div class="row">
-<input id="filtro" placeholder="Filtrar pedido ou endereço">
+<input id="filtro" placeholder="Filtrar pedido, cliente ou endereço">
 <select id="filtroMotorista"><option value="">Todos os motoristas</option></select>
 <select id="filtroStatus">
 <option value="">Todos os status</option>
@@ -141,7 +146,7 @@ body.camera-mode header div{font-size:12px}
 <table>
 <thead><tr>
 <th><input type="checkbox" id="todos"></th>
-<th>Parada</th><th>Pedido/código</th><th>Destinatário</th>
+<th>Parada / Pacote</th><th>Pedido/código</th><th>Destinatário</th>
 <th>Endereço</th><th>CEP</th><th>Motorista</th><th>Status</th>
 </tr></thead>
 <tbody id="tabela"><tr><td colspan="8">Importe uma planilha.</td></tr></tbody>
@@ -161,6 +166,7 @@ let cameraLigada=false;
 let ultimaLeitura='';
 let ultimaLeituraEm=0;
 let processando=false;
+let audioCtx=null;
 
 try {
  pedidos=JSON.parse(localStorage.getItem('rotaPaty_pedidos')||'[]');
@@ -220,9 +226,10 @@ function descobrirColunas(headers){
  localStorage.setItem('rotaPaty_colunas',JSON.stringify(colunas));
 }
 
+// Remove apenas indicações de apartamento/bloco/sala para agrupar prédios sem apagar o número da casa
 function limparComplementosEndereco(texto){
  return String(texto||'')
- .replace(/\b(apartamento|apto?\.?|apart?\.?|bloco|bl\.?|torre|unidade|sala|conjunto|casa)\s*[-:#]?\s*[a-z0-9-]+/gi,' ')
+ .replace(/\b(apartamento|apto?\.?|apart?\.?|bloco|bl\.?|torre|unidade|sala|conjunto)\s*[-:#]?\s*[a-z0-9-]+/gi,' ')
  .replace(/\s+/g,' ').replace(/\s*,\s*/g,', ')
  .replace(/^[,\s]+|[,\s]+$/g,'').trim();
 }
@@ -236,8 +243,12 @@ function endereco(p){
 }
 
 function salvarEstado(){
- localStorage.setItem('rotaPaty_pedidos',JSON.stringify(pedidos));
- localStorage.setItem('rotaPaty_motoristas',JSON.stringify(motoristas));
+ try {
+  localStorage.setItem('rotaPaty_pedidos',JSON.stringify(pedidos));
+  localStorage.setItem('rotaPaty_motoristas',JSON.stringify(motoristas));
+ } catch(e) {
+  console.warn('Limite de armazenamento atingido:', e);
+ }
 }
 
 function msg(t,err=false){
@@ -254,7 +265,12 @@ function proximoNumeroPacote(){
  return Math.max(0,...pedidos.map(p=>Number(p.numeroPacote)||0))+1;
 }
 
-function proximaParada(){
+function obterOuCriarParada(pedidoAtual){
+ const chave=chaveEndereco(pedidoAtual);
+ if(chave){
+  const existente=pedidos.find(x=>x.id!==pedidoAtual.id && x.parada && chaveEndereco(x)===chave);
+  if(existente) return existente.parada;
+ }
  return Math.max(0,...pedidos.map(p=>Number(p.parada)||0))+1;
 }
 
@@ -318,19 +334,22 @@ function tocarBip(){
  try{
   const AudioCtx=window.AudioContext||window.webkitAudioContext;
   if(!AudioCtx)return;
-  const ctx=new AudioCtx();
-  const osc=ctx.createOscillator();
-  const ganho=ctx.createGain();
+  if(!audioCtx) audioCtx=new AudioCtx();
+  if(audioCtx.state==='suspended') audioCtx.resume();
+
+  const osc=audioCtx.createOscillator();
+  const ganho=audioCtx.createGain();
 
   osc.type='sine';
-  osc.frequency.setValueAtTime(880,ctx.currentTime);
-  ganho.gain.setValueAtTime(0.0001,ctx.currentTime);
-  ganho.gain.exponentialRampToValueAtTime(0.22,ctx.currentTime+0.015);
-  ganho.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.18);
+  osc.frequency.setValueAtTime(880,audioCtx.currentTime);
+  ganho.gain.setValueAtTime(0.0001,audioCtx.currentTime);
+  ganho.gain.exponentialRampToValueAtTime(0.25,audioCtx.currentTime+0.015);
+  ganho.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+0.18);
 
-  osc.connect(ganho);ganho.connect(ctx.destination);
-  osc.start();osc.stop(ctx.currentTime+0.19);
-  osc.onended=()=>ctx.close();
+  osc.connect(ganho);
+  ganho.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime+0.19);
  }catch(e){}
 }
 
@@ -349,10 +368,11 @@ function atualizarListaScanner(){
   row.className='scan-order';
 
   const completo=grupo.every(p=>p.status==='Conferido');
+  const algumLido=grupo.some(p=>p.status==='Conferido');
 
   const check=document.createElement('span');
   check.className='check '+(completo?'':'pending');
-  check.textContent=completo?'✓':'□';
+  check.textContent=completo?'✓':(algumLido?'◐':'□');
 
   const info=document.createElement('div');
 
@@ -362,7 +382,7 @@ function atualizarListaScanner(){
 
   const address=document.createElement('div');
   address.className='order-address';
-  address.textContent=textoPacotes(grupo);
+  address.textContent=textoPacotes(grupo)+' ('+grupo.filter(p=>p.status==='Conferido').length+'/'+grupo.length+')';
 
   info.append(title,address);
   row.append(check,info);
@@ -406,25 +426,21 @@ function conferir(c,origem='manual'){
  if(!ja){
   p.status='Conferido';
   if(!p.numeroPacote)p.numeroPacote=proximoNumeroPacote();
-  if(!p.parada)p.parada=proximaParada();
+  if(!p.parada)p.parada=obterOuCriarParada(p);
  }
 
  salvarEstado();
  atualizar();
 
- $('filtro').value='';
- $('filtroStatus').value='';
- $('filtroMotorista').value='';
-
- $('numeroVisor').textContent='PACOTE '+p.numeroPacote;
- $('textoVisor').textContent=endereco(p)||'Endereço não informado';
+ $('numeroVisor').textContent='PACOTE '+p.numeroPacote+' (PARADA '+p.parada+')';
+ $('textoVisor').textContent=(endereco(p)||'Endereço não informado') + (valor(p,'destinatario') ? ' — ' + valor(p,'destinatario') : '');
 
  const grupo=agruparParadas(pedidos).find(g=>
   g.some(item=>String(item.id)===String(p.id))
  )||[p];
 
  resultado(
-  (ja?'Pacote já conferido':'Pacote conferido')+
+  (ja?'⚠️ Pacote já conferido anteriormente':'✅ Pacote conferido')+
   ' — PACOTE '+p.numeroPacote+
   ' | '+textoPacotes(grupo)+
   ' | '+(endereco(p)||'Endereço não informado')
@@ -436,6 +452,21 @@ function conferir(c,origem='manual'){
  if(origem!=='camera')$('codigo').focus();
  processando=false;
 }
+
+// BOTÃO LIMPAR TUDO / NOVA ROTA
+$('limparTudo').addEventListener('click',()=>{
+ if(!pedidos.length) return alert('A lista já está vazia.');
+ if(confirm('Tem certeza que deseja apagar os pedidos atuais para iniciar uma nova rota? (Os motoristas cadastrados serão mantidos)')){
+  pedidos=[];
+  localStorage.removeItem('rotaPaty_pedidos');
+  $('arquivo').value='';
+  $('numeroVisor').textContent='PACOTE —';
+  $('textoVisor').textContent='Aguardando leitura do primeiro pacote';
+  msg('Dados limpos. Importe uma nova planilha.');
+  resultado('');
+  atualizar();
+ }
+});
 
 // IMPORTAÇÃO DE EXCEL E CSV
 $('arquivo').addEventListener('change',async e=>{
@@ -483,7 +514,6 @@ $('arquivo').addEventListener('change',async e=>{
 
    return {
     id:antigo?.id??Date.now()+i,
-    dados,
     codigo,
     campos:{
      destinatario:String(dados[colunas.destinatario]??'').trim(),
@@ -568,8 +598,8 @@ $('iniciarCamera').addEventListener('click',async()=>{
    {
     fps:15,
     qrbox:(w,h)=>({
-     width:Math.max(150,Math.floor(Math.min(w*0.9,400))),
-     height:Math.max(80,Math.floor(Math.min(h*0.45,180)))
+     width:Math.max(180,Math.floor(Math.min(w*0.9,420))),
+     height:Math.max(90,Math.floor(Math.min(h*0.45,190)))
     }),
     aspectRatio:1.777
    },
@@ -631,7 +661,12 @@ function atualizar(){
    endereco(p),valor(p,'cep')].join(' '));
   return (!q||t.includes(q))&&(!fm||p.motorista===fm)&&
    (!fs||p.status===fs);
- }).sort((a,b)=>(Number(a.parada)||Infinity)-(Number(b.parada)||Infinity));
+ }).sort((a,b)=>{
+  const pa=Number(a.parada)||Infinity;
+  const pb=Number(b.parada)||Infinity;
+  if(pa!==pb) return pa-pb;
+  return (Number(a.numeroPacote)||Infinity)-(Number(b.numeroPacote)||Infinity);
+ });
 
  $('tabela').innerHTML='';
 
@@ -653,8 +688,14 @@ function atualizar(){
    if(p.parada){
     const b=document.createElement('span');
     b.className='route-number';
-    b.textContent=p.parada;
+    b.textContent='Parada '+p.parada;
     n.appendChild(b);
+    if(p.numeroPacote){
+     const pk=document.createElement('span');
+     pk.className='pkg-badge';
+     pk.textContent='Pct '+p.numeroPacote;
+     n.appendChild(pk);
+    }
    }else n.textContent='—';
    tr.appendChild(n);
 
@@ -737,7 +778,7 @@ $('todos').addEventListener('change',()=>{
  $(id).addEventListener(id==='filtro'?'input':'change',atualizar);
 });
 
-// EXPORTAÇÃO PARA O CIRCUIT
+// EXPORTAÇÃO PARA O CIRCUIT (1 LINHA POR PARADA OU AGRUPADO)
 function exportarCircuito(){
  const conferidos=pedidos.filter(p=>p.status==='Conferido');
 
@@ -747,31 +788,36 @@ function exportarCircuito(){
  }
 
  const grupos=agruparParadas(conferidos);
- const paradaPorId=new Map();
- const grupoPorId=new Map();
-
- grupos.forEach((grupo,i)=>{
-  grupo.forEach(p=>{
-   paradaPorId.set(String(p.id),i+1);
-   grupoPorId.set(String(p.id),grupo);
-  });
- });
-
  const linhas=[['Order ID','Name','Address','Postal Code','Stop Number','Notes']];
 
- conferidos.forEach(p=>{
-  const grupo=grupoPorId.get(String(p.id))||[p];
-  const enderecoEntrega=endereco(p);
+ grupos.forEach((grupo,i)=>{
+  const pPrincipal=grupo[0];
+  const numParada=pPrincipal.parada||(i+1);
+  const enderecoEntrega=endereco(pPrincipal);
   const pacotesDoEndereco=textoPacotes(grupo);
 
-  linhas.push([
-   p.codigo,
-   enderecoEntrega,
-   enderecoEntrega,
-   valor(p,'cep'),
-   paradaPorId.get(String(p.id))||'',
-   pacotesDoEndereco
-  ]);
+  grupo.forEach(p=>{
+   const dest=valor(p,'destinatario');
+   const comp=valor(p,'complemento');
+   const enderecoBruto=valor(p,'endereco');
+
+   const obsPartes=[
+    'PACOTE '+p.numeroPacote,
+    grupo.length>1 ? '('+pacotesDoEndereco+')' : '',
+    comp ? 'Comp: '+comp : '',
+    enderecoBruto && enderecoBruto!==limparComplementosEndereco(enderecoBruto) ? 'Orig: '+enderecoBruto : '',
+    dest ? 'Cliente: '+dest : ''
+   ].filter(Boolean);
+
+   linhas.push([
+    p.codigo,
+    (dest ? dest+' - ' : '')+pacotesDoEndereco,
+    enderecoEntrega,
+    valor(p,'cep'),
+    numParada,
+    obsPartes.join(' | ')
+   ]);
+  });
  });
 
  const csv='\uFEFF'+linhas.map(l=>
@@ -784,7 +830,7 @@ function exportarCircuito(){
 
  const a=document.createElement('a');
  a.href=url;
- a.download='rota-paty-para-circuit.csv';
+ a.download='rota-paty-circuit.csv';
  document.body.appendChild(a);
  a.click();
  a.remove();
@@ -793,7 +839,7 @@ function exportarCircuito(){
 
  resultado('Arquivo gerado com '+conferidos.length+
   ' pacote(s), agrupados em '+grupos.length+
-  ' parada(s). Os números dos pacotes foram incluídos nas observações.');
+  ' parada(s).');
 }
 
 $('exportarScanner').addEventListener('click',exportarCircuito);
