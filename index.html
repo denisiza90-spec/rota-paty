@@ -81,10 +81,9 @@ body.camera-mode header div{font-size:12px}
 
 <div class="ai-box">
   <strong>✨ Inteligência Artificial Gemini (Correção de Endereços)</strong>
-  <p class="small" style="margin:4px 0 8px">Cole sua chave do Google AI Studio uma única vez. Ela ficará salva neste celular/computador e corrigirá os endereços automaticamente ao bipar.</p>
+  <p class="small" style="margin:4px 0 8px">Cole sua chave do Google AI Studio abaixo. Ela é salva automaticamente no seu aparelho.</p>
   <div class="row">
     <input type="password" id="apiKeyGemini" placeholder="Cole aqui sua chave começando com AIza...">
-    <button id="salvarKey" class="secondary">Salvar Chave</button>
     <button id="corrigirLoteIA" class="ai-btn">✨ Corrigir Planilha Toda</button>
   </div>
   <div id="statusIA" class="small" style="margin-top:6px;color:#5b21b6;font-weight:bold"></div>
@@ -188,15 +187,15 @@ try {
  pedidos=[];motoristas=[];colunas={};
 }
 
-// Carregar Chave Gemini salva
-$('apiKeyGemini').value = $('apiKeyGemini').value=localStorage.getItem('rotaPaty_geminiKey')||'';
-if($('apiKeyGemini').value){$('statusIA').textContent='✅ Chave do Gemini ativa! Os endereços serão corrigidos ao bipar.';
+// Carregar e salvar automaticamente a chave do Gemini na memória do aparelho
+$('apiKeyGemini').value=localStorage.getItem('rotaPaty_geminiKey')||'';
+if($('apiKeyGemini').value){$('statusIA').textContent='✅ Chave do Gemini ativa!';
 }
 
-$('salvarKey').addEventListener('click',()=>{
+$('apiKeyGemini').addEventListener('input',()=>{
  const k=$('apiKeyGemini').value.trim();
  localStorage.setItem('rotaPaty_geminiKey',k);
- $('statusIA').textContent=k?'✅ Chave salva com sucesso!':'⚠️ Chave removida.';
+ $('statusIA').textContent=k?'✅ Chave salva na memória!':'⚠️ Chave vazia.';
 });
 
 function normalizar(s){
@@ -373,7 +372,6 @@ function tocarBip(){
  }catch(e){}
 }
 
-// INTEGRAÇÃO GEMINI: Corrige o endereço no momento do Bip sem travar a leitura
 async function corrigirEnderecoNoBip(pedido){
  const apiKey=localStorage.getItem('rotaPaty_geminiKey');
  if(!apiKey || pedido.corrigidoIA) return;
@@ -420,10 +418,9 @@ Retorne APENAS um JSON válido com estas chaves:
  }
 }
 
-// Botão para corrigir a planilha inteira de uma vez com o Gemini
 $('corrigirLoteIA').addEventListener('click',async()=>{
  const apiKey=localStorage.getItem('rotaPaty_geminiKey');
- if(!apiKey) return alert('Cole e salve sua Chave do Gemini primeiro!');
+ if(!apiKey) return alert('Digite sua Chave do Gemini primeiro!');
  if(!pedidos.length) return alert('Importe uma planilha primeiro!');
 
  const pendentesIA=pedidos.filter(p=>!p.corrigidoIA);
@@ -435,7 +432,7 @@ $('corrigirLoteIA').addEventListener('click',async()=>{
  for(const p of pendentesIA){
   $('statusIA').textContent=⏳ Corrigindo com Gemini: ${++concluidos} de ${pendentesIA.length}...;
   await corrigirEnderecoNoBip(p);
-  await new Promise(r=>setTimeout(r,350)); // Pausa leve para respeitar limite gratuito
+  await new Promise(r=>setTimeout(r,350));
  }
 
  $('statusIA').textContent=✅ Todos os ${pendentesIA.length} endereços foram padronizados pelo Gemini!;
@@ -534,7 +531,7 @@ function conferir(c,origem='manual'){
  );
 
  tocarBip();
- corrigirEnderecoNoBip(p); // Chama o Gemini em segundo plano!
+ corrigirEnderecoNoBip(p);
  $('codigo').value='';
 
  if(origem!=='camera')$('codigo').focus();
