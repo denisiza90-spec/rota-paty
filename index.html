@@ -58,7 +58,7 @@ $('apiKeyGemini').addEventListener('input',()=>{
 function normalizar(s){return String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}
 function valor(p,k){if(p&&p.campos&&p.campos[k]!==undefined&&p.campos[k]!==null&&String(p.campos[k]).trim()!=='')return String(p.campos[k]).trim();const c=colunas[k],r=p&&p.dados?p.dados:p;return c&&r?String(r[c]??'').trim():''}
 function descobrirColunas(headers){const h=headers.map(x=>({original:x,nome:normalizar(x)}));function loc(...ts){ts=ts.map(normalizar);return(h.find(c=>ts.some(t=>c.nome===t))||h.find(c=>ts.some(t=>c.nome.includes(t)))||{}).original||''}const rua=loc('endereco de entrega','endereco destinatario','endereco destino','logradouro','endereco','rua','address'),comp=loc('complemento','apartamento','numero do imovel','numero do endereco','numero','complement'),cep=loc('cep destino','cep','codigo postal','postal code','zip'),cidade=loc('cidade destino','cidade','municipio','city');colunas={pedido:loc('numero de pedido jms','numero do pedido jms','numero de pedido','codigo de barras','barcode','rastreamento','tracking','order id','pedido','codigo'),destinatario:loc('nome do destinatario','destinatario','consignatario','nome do cliente','cliente','recipient','name'),cep,cidade,endereco:rua||comp,complemento:rua?comp:'',distrito:loc('distrito destinatario','bairro destinatario','distrito','bairro','neighborhood'),estado:loc('uf destino','estado destino','uf','estado','state'),motorista:loc('nome do entregador responsavel','entregador responsavel','motorista','entregador')};store.setItem('rotaPaty_colunas',JSON.stringify(colunas))}
-function limparComplementosEndereco(texto){return String(texto||'').replace(/[,;\s]+/g,' ').replace(/\b(apartamento|apto?\.?|apart?\.?|bloco|bl\.?|torre|unidade|sala|conjunto)\s*[-:#]?\s*[a-z0-9-]+/gi,' ').replace(/\s+/g,' ').replace(/\s*,\s*/g,', ').replace(/^[,\s]+|[,\s]+$/g,'').trim()}function endereco(p){const rua=limparComplementosEndereco(valor(p,'endereco'));return[rua,valor(p,'distrito'),valor(p,'cidade')].filter(Boolean).join(', ')}function salvarEstado(){store.setItem('rotaPaty_pedidos',JSON.stringify(pedidos));store.setItem('rotaPaty_motoristas',JSON.stringify(motoristas))}function msg(t,err=false){$('mensagem').textContent=t;$('mensagem').className=err?'error':''}function resultado(t,err=false){$('resultado').textContent=t;$('resultado').className=err?'error':''}
+function limparComplementosEndereco(texto){return String(texto||'').replace(/[,;\s]+/g,' ').replace(/\b(apartamento|apto|apt|apart|ap|bloco|bl|torre|unidade|sala|conjunto|conj)\b\.?\s*[-:#]?\s*(?:\d+[a-z]?|[a-z])\b/gi,' ').replace(/(\d)\s+casa\b\s*[a-z0-9-]*\s*$/i,'$1').replace(/(\d)\s+[a-z]\s*$/i,'$1').replace(/\s+/g,' ').replace(/\s*,\s*/g,', ').replace(/^[,\s]+|[,\s]+$/g,'').trim()}function endereco(p){const rua=limparComplementosEndereco(valor(p,'endereco'));return[rua,valor(p,'distrito'),valor(p,'cidade')].filter(Boolean).join(', ')}function salvarEstado(){store.setItem('rotaPaty_pedidos',JSON.stringify(pedidos));store.setItem('rotaPaty_motoristas',JSON.stringify(motoristas))}function msg(t,err=false){$('mensagem').textContent=t;$('mensagem').className=err?'error':''}function resultado(t,err=false){$('resultado').textContent=t;$('resultado').className=err?'error':''}
 function proximoNumeroPacote(){return Math.max(0,...pedidos.map(p=>Number(p.numeroPacote)||0))+1}
 
 function obterOuCriarParada(pedidoAtual){
@@ -183,31 +183,24 @@ async function pararScanner(){if(scanner){try{if(cameraLigada)await scanner.stop
 function atualizar(){$('total').textContent=pedidos.length;$('lidos').textContent=pedidos.filter(p=>p.status==='Conferido').length;$('pendentes').textContent=pedidos.filter(p=>p.status!=='Conferido').length;const fm=$('filtroMotorista').value,fs=$('filtroStatus').value,q=normalizar($('filtro').value);const lista=pedidos.filter(p=>{const t=normalizar([p.codigo,valor(p,'destinatario'),endereco(p),valor(p,'cep')].join(' '));return(!q||t.includes(q))&&(!fm||p.motorista===fm)&&(!fs||p.status===fs)}).sort((a,b)=>{const pa=Number(a.parada)||Infinity,pb=Number(b.parada)||Infinity;if(pa!==pb)return pa-pb;return(Number(a.numeroPacote)||Infinity)-(Number(b.numeroPacote)||Infinity)});$('tabela').innerHTML='';if(!lista.length)$('tabela').innerHTML='<tr><td colspan="8">Nenhum pedido encontrado.</td></tr>';else lista.forEach(p=>{const tr=document.createElement('tr'),td=document.createElement('td'),ck=document.createElement('input');ck.type='checkbox';ck.className='pedidoCheck';ck.value=p.id;td.appendChild(ck);tr.appendChild(td);const n=document.createElement('td');if(p.parada){const b=document.createElement('span');b.className='route-number';b.textContent='Parada '+p.parada;n.appendChild(b);if(p.numeroPacote){const pk=document.createElement('span');pk.style.cssText='background:#fef3c7;color:#92400e;font-weight:bold;padding:2px 6px;border-radius:4px;margin-left:4px;font-size:11px';pk.textContent='Pct '+p.numeroPacote;n.appendChild(pk)}}else n.textContent='—';tr.appendChild(n);[p.codigo,valor(p,'destinatario'),(p.corrigidoIA?'✨ ':'')+endereco(p),valor(p,'cep'),p.motorista||'Não atribuído',p.status].forEach((v,i)=>{const c=document.createElement('td');if(i===5&&v==='Conferido'){const b=document.createElement('span');b.className='status';b.textContent=v;c.appendChild(b)}else c.textContent=v||'—';tr.appendChild(c)});$('tabela').appendChild(tr)});const nomes=motoristas.map(m=>m.nome);['filtroMotorista','destinoMotorista'].forEach(id=>{const sel=$(id),ant=sel.value;sel.innerHTML='<option value="">'+(id==='filtroMotorista'?'Todos os motoristas':'Selecione o motorista')+'</option>';nomes.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;sel.appendChild(o)});if(nomes.includes(ant))sel.value=ant});$('listaMotoristas').textContent=nomes.length?nomes.join(' • '):'Nenhum motorista cadastrado.';atualizarListaScanner()}
 $('adicionarMotorista').addEventListener('click',()=>{const nome=$('nomeMotorista').value.trim();if(!nome)return alert('Digite o nome do motorista.');if(motoristas.some(m=>normalizar(m.nome)===normalizar(nome)))return alert('Esse motorista já está cadastrado.');motoristas.push({nome});$('nomeMotorista').value='';salvarEstado();atualizar()});$('atribuir').addEventListener('click',()=>{const nome=$('destinoMotorista').value;if(!nome)return alert('Selecione um motorista.');const ids=[...document.querySelectorAll('.pedidoCheck:checked')].map(c=>Number(c.value));if(!ids.length)return alert('Marque pelo menos um pedido.');pedidos.filter(p=>ids.includes(Number(p.id))).forEach(p=>p.motorista=nome);salvarEstado();atualizar();resultado(ids.length+' pedido(s) atribuído(s) a '+nome+'.')});$('todos').addEventListener('change',()=>document.querySelectorAll('.pedidoCheck').forEach(c=>c.checked=$('todos').checked));['filtro','filtroMotorista','filtroStatus'].forEach(id=>$(id).addEventListener(id==='filtro'?'input':'change',atualizar));
 
+function formatarCep(c){const d=String(c||'').replace(/\D/g,'');return d.length===8?d.slice(0,5)+'-'+d.slice(5):String(c||'').trim()}
 function exportarCircuito(){
  const conferidos=pedidos.filter(p=>p.status==='Conferido');
  if(!conferidos.length){alert('Nenhum pacote foi bipado ainda. Bipe os pacotes que deseja enviar ao Circuit.');return;}
- const grupos=agruparParadas(conferidos);
- const paradaPorId=new Map();
- const grupoPorId=new Map();
+ const porNumero=(a,b)=>(Number(a.numeroPacote)||0)-(Number(b.numeroPacote)||0);
+ // Um grupo = um endereço = uma parada (vários pacotes no mesmo prédio contam como uma parada só)
+ const grupos=agruparParadas(conferidos).map(g=>g.slice().sort(porNumero)).sort((a,b)=>porNumero(a[0],b[0]));
+ const linhas=[['Order ID','Address','Postal Code','Notes']];
  grupos.forEach((grupo,i)=>{
-  grupo.forEach(p=>{
-   paradaPorId.set(String(p.id),i+1);
-   grupoPorId.set(String(p.id),grupo);
-  });
- });
- const linhas=[['Order ID','Name','Address','Postal Code','Stop Number','Notes']];
- conferidos.forEach(p=>{
-  const grupo=grupoPorId.get(String(p.id))||[p];
-  const pacotesDoEndereco=grupo.map(x=>x.numeroPacote).filter(Boolean).join(', ');
-  const dest=valor(p,'destinatario');
-  const notas='Pacote '+(p.numeroPacote||'')+(grupo.length>1?' (Junto com pct: '+pacotesDoEndereco+')':'')+(dest?' | Cliente: '+dest:'');
-  linhas.push([p.codigo,dest||('Pacote '+p.numeroPacote),endereco(p),valor(p,'cep'),paradaPorId.get(String(p.id))||'',notas]);
+  const p=grupo[0];
+  const pacotes=grupo.map(x=>x.numeroPacote).filter(Boolean).join(', ');
+  linhas.push([i+1,endereco(p),formatarCep(valor(p,'cep')),pacotes]);
  });
  const csv='\uFEFF'+linhas.map(l=>l.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
  const a=document.createElement('a');a.href=url;a.download='rota-paty-para-circuit.csv';document.body.appendChild(a);a.click();a.remove();
  setTimeout(()=>URL.revokeObjectURL(url),1500);
- resultado('Arquivo gerado com '+conferidos.length+' pacote(s), agrupados em '+grupos.length+' parada(s).');
+ resultado('Arquivo gerado: '+conferidos.length+' pacote(s) em '+grupos.length+' parada(s).');
 }
 
 $('fotoEtiqueta').addEventListener('click',()=>{if(!pedidos.length){resultado('Importe a planilha antes de ler etiquetas.',true);return}$('fotoInput').click()});
