@@ -147,6 +147,33 @@ async function corrigirEnderecoNoBip(pedido){
  }
 }
 
+// RUA PELO CEP: quando o endereço veio só com número (sem nome de rua), busca a rua pelo CEP
+function ruaIncompleta(p){const base=limparComplementosEndereco(valor(p,'endereco')).replace(/\b(rua|r|avenida|av|travessa|tv|estrada|rodovia|rod|alameda|al|beco|servidao|servidão)\b\.?/gi,'').replace(/\bs\/?n\b/gi,'');return !/\p{L}{2,}/u.test(base)}
+async function corrigirRuaPeloCep(pedido){
+ if(pedido.ruaPeloCep||!ruaIncompleta(pedido))return;
+ const cep=String(valor(pedido,'cep')).replace(/\D/g,'');
+ if(cep.length!==8)return;
+ try{
+  const resp=await fetch('https://viacep.com.br/ws/'+cep+'/json/');
+  if(!resp.ok)return;
+  const d=await resp.json();
+  pedido.ruaPeloCep=true;
+  if(!d||d.erro||!d.logradouro){salvarEstado();return}
+  const base=limparComplementosEndereco(valor(pedido,'endereco'));
+  const num=(base.match(/\d+/)||[''])[0]||'S/N';
+  pedido.campos.endereco=d.logradouro+' '+num;
+  if(!valor(pedido,'distrito')&&d.bairro)pedido.campos.distrito=d.bairro;
+  if(!valor(pedido,'cidade')&&d.localidade)pedido.campos.cidade=d.localidade;
+  pedido.parada=null;
+  pedido.parada=obterOuCriarParada(pedido);
+  salvarEstado();
+  atualizar();
+  $('textoVisor').textContent='📍 '+endereco(pedido);
+ }catch(e){
+  console.warn('Erro ViaCEP:',e);
+ }
+}
+
 function conferir(c,origem='manual'){
  c=String(c||'').trim();
  if(!c){resultado('Digite ou leia o código do pacote.',true);return}
@@ -169,7 +196,7 @@ function conferir(c,origem='manual'){
  tocarBip();
 
  // Aciona a IA de forma limpa sem atrapalhar o bip
- corrigirEnderecoNoBip(p);
+ corrigirRuaPeloCep(p).then(()=>corrigirEnderecoNoBip(p));
 
  $('codigo').value='';
  if(origem!=='camera')$('codigo').focus();
