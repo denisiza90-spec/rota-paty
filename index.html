@@ -148,15 +148,15 @@ async function corrigirEnderecoNoBip(pedido){
 }
 
 // RUA PELO CEP: quando o endereço veio só com número (sem nome de rua), busca a rua pelo CEP
-function ruaIncompleta(p){const base=limparComplementosEndereco(valor(p,'endereco')).replace(/\b(rua|r|avenida|av|travessa|tv|estrada|rodovia|rod|alameda|al|beco|servidao|servidão)\b\.?/gi,'').replace(/\bs\/?n\b/gi,'');return !/\p{L}{2,}/u.test(base)}
+function ruaIncompleta(p){const base=limparComplementosEndereco(valor(p,'endereco'));return !/^(rua|r|avenida|av|travessa|trav|tv|estrada|est|rodovia|rod|alameda|al|beco|servidao|servidão|largo|praca|praça|caminho|via|acesso|loteamento)\b/i.test(base)}
 async function corrigirRuaPeloCep(pedido){
  if(pedido.ruaPeloCep||!ruaIncompleta(pedido))return;
  const cep=String(valor(pedido,'cep')).replace(/\D/g,'');
  if(cep.length!==8)return;
  try{
-  const resp=await fetch('https://viacep.com.br/ws/'+cep+'/json/');
-  if(!resp.ok)return;
-  const d=await resp.json();
+  const cache=window._cepCache||(window._cepCache={});
+  let d=cache[cep];
+  if(!d){const resp=await fetch('https://viacep.com.br/ws/'+cep+'/json/');if(!resp.ok)return;d=await resp.json();cache[cep]=d}
   pedido.ruaPeloCep=true;
   if(!d||d.erro||!d.logradouro){salvarEstado();return}
   const base=limparComplementosEndereco(valor(pedido,'endereco'));
@@ -232,6 +232,11 @@ function exportarCircuito(){
 
 $('fotoEtiqueta').addEventListener('click',()=>{if(!pedidos.length){resultado('Importe a planilha antes de ler etiquetas.',true);return}$('fotoInput').click()});
 $('fotoInput').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;if(!window.Html5Qrcode){resultado('O leitor de código não carregou. Verifique a internet.',true);e.target.value='';return}resultado('Lendo etiqueta...');try{const q=new Html5Qrcode('scannerArquivo');const txt=await q.scanFile(f,false);try{q.clear()}catch(_){}conferir(txt,'camera')}catch(err){resultado('Não consegui ler o código na foto. Aproxime, deixe o código nítido e bem iluminado, ou digite o número.',true)}finally{e.target.value=''}});
-$('exportarScanner').addEventListener('click',exportarCircuito);$('exportar').addEventListener('click',exportarCircuito);
+async function corrigirRuasConferidos(){
+ const lista=pedidos.filter(p=>p.status==='Conferido'&&!p.ruaPeloCep&&ruaIncompleta(p));
+ for(let i=0;i<lista.length;i++){resultado('Corrigindo ruas pelo CEP... '+(i+1)+'/'+lista.length);await corrigirRuaPeloCep(lista[i])}
+}
+async function exportarComCorrecao(){await corrigirRuasConferidos();exportarCircuito()}
+$('exportarScanner').addEventListener('click',exportarComCorrecao);$('exportar').addEventListener('click',exportarComCorrecao);
 atualizar();
 </script></body></html>
