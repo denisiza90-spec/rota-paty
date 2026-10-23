@@ -1,0 +1,15 @@
+/* B — Clean: branco + verde */
+:root{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#f7f8fa;color:#111827}
+header{background:#fff;color:#111827;padding:18px;border-bottom:1px solid #e5e7eb;box-shadow:0 1px 0 #0000}
+header h1{font-size:22px;color:#047857}
+header div{color:#6b7280;font-size:13px}
+.card{border-radius:14px;box-shadow:none;border:1px solid #e5e7eb}
+h2{font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#374151}
+button{border-radius:999px;background:#059669;font-weight:600;padding:11px 18px}
+button.secondary{background:#fff;color:#047857;border:1.5px solid #a7f3d0}
+.stat{background:#ecfdf5;border-radius:12px}
+.stat strong{font-size:28px;color:#065f46}
+.stat span{color:#047857;font-size:13px}
+#exportarScanner{background:#111827;border-radius:999px;padding:14px}
+input,select{border-radius:10px;border-color:#e5e7eb;background:#fafafa}
+#visorPacote{background:#064e3b;border-radius:14px}
