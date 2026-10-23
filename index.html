@@ -40,7 +40,7 @@ body.camera-mode #visorPacote strong{font-size:clamp(19px,5vw,30px)}
 </section>
 
 <section class="card"><h2>2. Resumo da operação</h2><div class="stats"><div class="stat"><strong id="total">0</strong><span>Pedidos importados</span></div><div class="stat"><strong id="pendentes">0</strong><span>Pacotes pendentes</span></div><div class="stat"><strong id="lidos">0</strong><span>Pacotes conferidos</span></div></div></section>
-<section class="card"><h2>3. Bipar ou pesquisar pacote</h2><p>Use leitor USB/Bluetooth, digite o código e pressione Enter, ou abra a câmera. O scanner continua ligado até você pará-lo.</p><div class="row"><input id="codigo" placeholder="Código de barras ou número do pedido" autocomplete="off"><button id="buscar">Buscar pacote</button></div><div class="row" style="margin-top:8px"><button id="iniciarCamera">Abrir scanner da câmera</button><button id="pararCamera" class="secondary" disabled>Parar câmera</button></div><div class="row" style="margin-top:8px"><button id="fotoEtiqueta" style="background:#7c3aed">📷 Tirar foto da etiqueta</button><span class="small">Funciona mesmo sem HTTPS</span></div><input type="file" id="fotoInput" accept="image/*" capture="environment" hidden><div id="scannerArquivo" style="display:none"></div><button id="exportarScanner">⬇ Baixar planilha para o Circuit</button><div class="scan-workspace"><div id="scanner" hidden></div><div id="visorPacote" aria-live="polite"><strong id="numeroVisor">PACOTE —</strong><span id="textoVisor">Aguardando leitura do primeiro pacote</span></div></div><div id="resultado" aria-live="polite"></div><div id="scannerLista"><h3>Pacotes e endereços — ✓ conferidos</h3><div id="scannerListaItens"><div class="scan-order"><span class="check pending">□</span><div>Importe a planilha para listar os pacotes aqui.</div></div></div></div><p class="small">O ✓ verde indica pacote bipado. A lista de endereços fica abaixo do scanner, e o botão acima baixa o arquivo para importar no Circuit.</p></section>
+<section class="card"><h2>3. Bipar ou pesquisar pacote</h2><p>Use leitor USB/Bluetooth, digite o código e pressione Enter, ou abra a câmera. O scanner continua ligado até você pará-lo.</p><div class="row"><input id="codigo" placeholder="Código de barras ou número do pedido" autocomplete="off"><button id="buscar">Buscar pacote</button></div><div class="row" style="margin-top:8px"><button id="iniciarCamera">Abrir scanner da câmera</button><button id="pararCamera" class="secondary" disabled>Parar câmera</button></div><div class="row" style="margin-top:8px"><button id="fotoEtiqueta" style="background:#7c3aed">📷 Tirar foto da etiqueta</button><span class="small">Funciona mesmo sem HTTPS</span></div><input type="file" id="fotoInput" accept="image/*" capture="environment" hidden><div id="scannerArquivo" style="display:none"></div><button id="exportarScanner">⬇ Baixar planilha para o Circuit</button><div id="painelRevisao" hidden></div><div class="scan-workspace"><div id="scanner" hidden></div><div id="visorPacote" aria-live="polite"><strong id="numeroVisor">PACOTE —</strong><span id="textoVisor">Aguardando leitura do primeiro pacote</span></div></div><div id="resultado" aria-live="polite"></div><div id="scannerLista"><h3>Pacotes e endereços — ✓ conferidos</h3><div id="scannerListaItens"><div class="scan-order"><span class="check pending">□</span><div>Importe a planilha para listar os pacotes aqui.</div></div></div></div><p class="small">O ✓ verde indica pacote bipado. A lista de endereços fica abaixo do scanner, e o botão acima baixa o arquivo para importar no Circuit.</p></section>
 <section class="card"><h2>4. Cadastrar motorista</h2><div class="row"><input id="nomeMotorista" placeholder="Nome do motorista"><button id="adicionarMotorista">Adicionar motorista</button></div><div id="listaMotoristas" style="margin-top:12px"></div></section>
 <section class="card"><h2>5. Pedidos e distribuição das rotas</h2><div class="row"><input id="filtro" placeholder="Filtrar por pedido, nome, CEP ou endereço"><select id="filtroMotorista"><option value="">Todos os motoristas</option></select><select id="filtroStatus"><option value="">Todos os status</option><option value="Pendente">Pendentes</option><option value="Conferido">Conferidos</option></select></div><div class="row" style="margin-top:12px"><select id="destinoMotorista"><option value="">Selecione o motorista</option></select><button id="atribuir">Atribuir selecionados</button><button id="exportar" class="secondary">Exportar CSV</button></div><p class="small">Marque os pedidos na tabela antes de atribuí-los a um motorista. “Parada” mostra a ordem automática de conferência.</p><div class="table-wrap" style="margin-top:12px"><table><thead><tr><th><input type="checkbox" id="todos" aria-label="Selecionar todos"></th><th>Parada</th><th>Pedido / código</th><th>Destinatário</th><th>Endereço</th><th>CEP</th><th>Motorista</th><th>Status</th></tr></thead><tbody id="tabela"><tr><td colspan="8">Importe uma planilha para começar.</td></tr></tbody></table></div></section></main>
 <script>
@@ -77,7 +77,9 @@ function obterOuCriarParada(pedidoAtual){
  return Math.max(0,...pedidos.map(p=>Number(p.parada)||0))+1;
 }
 
-function chaveEndereco(p){const base=limparComplementosEndereco(valor(p,'endereco'));const partes=[base,valor(p,'distrito'),valor(p,'cidade'),valor(p,'estado'),valor(p,'cep')].map(x=>String(x||'').trim()).filter(Boolean);if(!partes.length)return '';return normalizar(partes.join('|')).replace(/[^a-z0-9|]/g,'')}function agruparParadas(lista){const grupos=new Map();for(const p of lista){const k=chaveEndereco(p)||('pedido-individual:'+p.codigo);if(!grupos.has(k))grupos.set(k,[]);grupos.get(k).push(p)}return [...grupos.values()]}function acharPedido(c){c=normalizar(c);return pedidos.find(p=>normalizar(p.codigo)===c)||pedidos.find(p=>normalizar(p.codigo).includes(c)||c.includes(normalizar(p.codigo)))||null}
+function chaveEndereco(p){const base=limparComplementosEndereco(valor(p,'endereco'));const partes=[base,valor(p,'distrito'),valor(p,'cidade'),valor(p,'estado'),valor(p,'cep')].map(x=>String(x||'').trim()).filter(Boolean);if(!partes.length)return '';return normalizar(partes.join('|')).replace(/[^a-z0-9|]/g,'')}function agruparParadas(lista){const grupos=new Map();for(const p of lista){const k=chaveEndereco(p)||('pedido-individual:'+p.codigo);if(!grupos.has(k))grupos.set(k,[]);grupos.get(k).push(p)}return [...grupos.values()]}// Busca EXATA: só aceita o código idêntico (ignora espaços, traços e maiúsculas). Nunca aceita código parecido.
+function soCodigo(s){return normalizar(s).replace(/[^a-z0-9]/g,'')}
+function acharPedido(c){const n=normalizar(c),s=soCodigo(c);if(!s)return null;return pedidos.find(p=>normalizar(p.codigo)===n)||pedidos.find(p=>soCodigo(p.codigo)===s)||null}
 function tocarBip(){try{const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return;const ctx=new AudioCtx();const osc=ctx.createOscillator();const ganho=ctx.createGain();osc.type='sine';osc.frequency.setValueAtTime(880,ctx.currentTime);ganho.gain.setValueAtTime(0.0001,ctx.currentTime);ganho.gain.exponentialRampToValueAtTime(0.22,ctx.currentTime+0.015);ganho.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.18);osc.connect(ganho);ganho.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+0.19);osc.onended=()=>ctx.close()}catch(e){}}
 
 function atualizarListaScanner(){
@@ -243,7 +245,60 @@ async function corrigirRuasConferidos(){
  const lista=pedidos.filter(p=>p.status==='Conferido'&&!p.ruaPeloCep&&ruaIncompleta(p));
  for(let i=0;i<lista.length;i++){resultado('Corrigindo ruas pelo CEP... '+(i+1)+'/'+lista.length);await corrigirRuaPeloCep(lista[i])}
 }
-async function exportarComCorrecao(){await corrigirRuasConferidos();exportarCircuito()}
+// REVISAR ANTES DO CIRCUIT: mostra só os pacotes em que a IA ou o CEP mudaram a rua ou o número
+const PREFIXOS_RUA=/^(rua|r|avenida|av|travessa|trav|tv|estrada|est|rodovia|rod|alameda|al|beco|servidao|largo|praca|caminho|via|acesso|loteamento)\b\s*/;
+function ruaOriginal(p){const d=p.dados||{};return colunas.endereco?String(d[colunas.endereco]??'').trim():''}
+function compOriginal(p){const d=p.dados||{};return colunas.complemento?String(d[colunas.complemento]??'').trim():''}
+function numeroDe(s){const m=limparComplementosEndereco(s).match(/\d+/g);return m?m[m.length-1]:''}
+function nomeRua(s){let t=normalizar(limparComplementosEndereco(s)).replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();const n=numeroDe(s);if(n)t=t.replace(new RegExp('\\b'+n+'\\b(?!.*\\b'+n+'\\b)'),' ');t=t.replace(/\bs n\b/g,' ').trim().replace(PREFIXOS_RUA,'');return t.split(' ').filter(w=>w&&!['de','da','do','das','dos','e'].includes(w)).join(' ')}
+function numeroOriginal(p){return numeroDe(ruaOriginal(p))||numeroDe(compOriginal(p))}
+function motivosRevisao(p){
+ const orig=ruaOriginal(p),atual=valor(p,'endereco');
+ if(!orig||p.revisadoEnd===atual)return[];
+ const m=[];
+ if(!numeroDe(atual))m.push('Sem número');
+ else if(numeroOriginal(p)&&numeroDe(atual)!==numeroOriginal(p))m.push('Número mudou');
+ if(nomeRua(orig)&&nomeRua(atual)&&nomeRua(orig)!==nomeRua(atual))m.push('Rua mudou');
+ return m;
+}
+function usarOriginal(p){
+ let rua=ruaOriginal(p);const num=numeroDe(compOriginal(p));
+ if(!/\d/.test(rua)&&num)rua+=' '+num;
+ p.campos.endereco=rua;
+ const d=p.dados||{};if(colunas.distrito)p.campos.distrito=String(d[colunas.distrito]??'').trim();
+ p.corrigidoIA=true;p.ruaPeloCep=true; // não deixa a IA nem o CEP trocarem de novo
+ p.parada=null;p.parada=obterOuCriarParada(p);
+}
+function mostrarRevisao(lista){
+ const box=$('painelRevisao');box.innerHTML='';box.hidden=false;
+ box.style.cssText='margin-top:12px;border:2px solid #dc2626;border-radius:10px;padding:12px;background:#fff7f7';
+ const h=document.createElement('h3');h.style.margin='0 0 4px';h.textContent='⚠️ Revisar antes do Circuit ('+lista.length+')';box.appendChild(h);
+ const ex=document.createElement('p');ex.className='small';ex.style.margin='0 0 10px';ex.textContent='Estes pacotes estão sem número ou a IA/CEP mudaram a rua ou o número. Confira com a planilha, corrija se precisar e depois baixe.';box.appendChild(ex);
+ lista.forEach(p=>{
+  const it=document.createElement('div');it.style.cssText='border-top:1px solid #fecaca;padding:10px 0';
+  const t=document.createElement('div');t.style.fontWeight='bold';t.textContent='Pacote '+(p.numeroPacote||'—')+' · '+motivosRevisao(p).join(' · ');it.appendChild(t);
+  const o=document.createElement('div');o.className='small';o.style.margin='4px 0';o.textContent='📄 Planilha: '+[ruaOriginal(p),compOriginal(p)].filter(Boolean).join(', ');it.appendChild(o);
+  const lb=document.createElement('div');lb.className='small';lb.textContent='🚚 Vai para o Circuit (rua e número):';it.appendChild(lb);
+  const inp=document.createElement('input');inp.value=valor(p,'endereco');inp.style.cssText='width:100%;margin:4px 0';
+  inp.addEventListener('change',()=>{p.campos.endereco=inp.value.trim();p.corrigidoIA=true;p.ruaPeloCep=true;p.parada=null;p.parada=obterOuCriarParada(p);salvarEstado();atualizar()});
+  it.appendChild(inp);
+  const b=document.createElement('button');b.className='secondary';b.textContent='↩ Usar o da planilha';
+  b.addEventListener('click',()=>{usarOriginal(p);inp.value=valor(p,'endereco');salvarEstado();atualizar()});
+  it.appendChild(b);box.appendChild(it);
+ });
+ const ok=document.createElement('button');ok.style.cssText='width:100%;margin-top:10px;background:#0f766e;font-weight:bold';ok.textContent='✅ Conferi, baixar para o Circuit';
+ ok.addEventListener('click',()=>{lista.forEach(p=>p.revisadoEnd=valor(p,'endereco'));salvarEstado();box.hidden=true;box.innerHTML='';exportarCircuito()});
+ const can=document.createElement('button');can.className='secondary';can.style.cssText='width:100%;margin-top:6px';can.textContent='Fechar sem baixar';
+ can.addEventListener('click',()=>{box.hidden=true;box.innerHTML=''});
+ box.appendChild(ok);box.appendChild(can);
+ box.scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function exportarComCorrecao(){
+ await corrigirRuasConferidos();
+ const revisar=pedidos.filter(p=>p.status==='Conferido'&&motivosRevisao(p).length).sort((a,b)=>(Number(a.numeroPacote)||0)-(Number(b.numeroPacote)||0));
+ if(revisar.length){resultado(revisar.length+' pacote(s) precisam de revisão antes de baixar.',true);mostrarRevisao(revisar);return}
+ exportarCircuito();
+}
 $('exportarScanner').addEventListener('click',exportarComCorrecao);$('exportar').addEventListener('click',exportarComCorrecao);
 
 // BACKUP: salvar em arquivo .json e restaurar depois (a chave da IA não entra no arquivo)
