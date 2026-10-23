@@ -157,6 +157,7 @@ async function corrigirEnderecoNoBip(pedido){
 }
 
 // RUA PELO CEP: quando o endereço veio só com número (sem nome de rua), busca a rua pelo CEP
+function numeroCasa(s){let t=normalizar(limparComplementosEndereco(s));t=t.replace(/\b\d+\s+de\s+[a-z]+/g,' ').replace(/\b(sc|br|km|rodovia|rod)\s*-?\s*\d+/g,' ');const m=t.match(/\d+/);if(!m)return '';const sn=t.search(/\bs\s*\/\s*n\b/);if(sn>=0&&sn<m.index)return '';return m[0]}
 function ruaIncompleta(p){const base=limparComplementosEndereco(valor(p,'endereco'));return !/^(rua|r|avenida|av|travessa|trav|tv|estrada|est|rodovia|rod|alameda|al|beco|servidao|servidão|largo|praca|praça|caminho|via|acesso|loteamento)\b/i.test(base)}
 async function corrigirRuaPeloCep(pedido){
  if(pedido.ruaPeloCep||!ruaIncompleta(pedido))return;
@@ -169,7 +170,8 @@ async function corrigirRuaPeloCep(pedido){
   pedido.ruaPeloCep=true;
   if(!d||d.erro||!d.logradouro){salvarEstado();return}
   const base=limparComplementosEndereco(valor(pedido,'endereco'));
-  const num=(base.match(/\d+/)||[''])[0]||'S/N';
+  const num=numeroCasa(base)||'S/N';
+  pedido.ruaCep=d.logradouro;
   pedido.campos.endereco=d.logradouro+' '+num;
   if(!valor(pedido,'distrito')&&d.bairro)pedido.campos.distrito=d.bairro;
   if(!valor(pedido,'cidade')&&d.localidade)pedido.campos.cidade=d.localidade;
@@ -249,21 +251,31 @@ async function corrigirRuasConferidos(){
 const PREFIXOS_RUA=/^(rua|r|avenida|av|travessa|trav|tv|estrada|est|rodovia|rod|alameda|al|beco|servidao|largo|praca|caminho|via|acesso|loteamento)\b\s*/;
 function ruaOriginal(p){const d=p.dados||{};return colunas.endereco?String(d[colunas.endereco]??'').trim():''}
 function compOriginal(p){const d=p.dados||{};return colunas.complemento?String(d[colunas.complemento]??'').trim():''}
-function numeroDe(s){const m=limparComplementosEndereco(s).match(/\d+/g);return m?m[m.length-1]:''}
-function nomeRua(s){let t=normalizar(limparComplementosEndereco(s)).replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();const n=numeroDe(s);if(n)t=t.replace(new RegExp('\\b'+n+'\\b(?!.*\\b'+n+'\\b)'),' ');t=t.replace(/\bs n\b/g,' ').trim().replace(PREFIXOS_RUA,'');return t.split(' ').filter(w=>w&&!['de','da','do','das','dos','e'].includes(w)).join(' ')}
-function numeroOriginal(p){return numeroDe(ruaOriginal(p))||numeroDe(compOriginal(p))}
+function temPrefixoRua(s){return PREFIXOS_RUA.test(normalizar(limparComplementosEndereco(s)).replace(/[^a-z0-9 ]/g,' ').trim())}
+function nomeRua(s){let t=normalizar(limparComplementosEndereco(s)).replace(/[^a-z0-9 ]/g,' ').replace(/\b(s n|sn)\b/g,' ').replace(/\d+[a-z]?\b/g,' ').replace(/\s+/g,' ').trim().replace(PREFIXOS_RUA,'');return t.split(' ').filter(w=>w&&!['de','da','do','das','dos','e'].includes(w)).join(' ')}
+// Número no endereço final, ignorando números que fazem parte do nome da rua do CEP (ex.: Rua Projetada 3)
+function numeroFinal(p){let a=valor(p,'endereco');if(p.ruaCep&&normalizar(a).startsWith(normalizar(p.ruaCep)))a=a.slice(p.ruaCep.length);return numeroCasa(a)}
+function numeroOriginal(p){return numeroCasa(ruaOriginal(p))||numeroCasa(compOriginal(p))}
+// Rua de referência: a que veio do CEP; se não usou CEP, a da planilha (quando ela tem "Rua", "Av."...)
+function ruaReferencia(p){if(p.ruaCep)return nomeRua(p.ruaCep);const o=ruaOriginal(p);return temPrefixoRua(o)?nomeRua(o):''}
+function mesmaRua(a,b){const x=a.split(' '),y=b.split(' ');const[c,l]=x.length<=y.length?[x,y]:[y,x];return c.every(w=>l.includes(w))}
 function motivosRevisao(p){
- const orig=ruaOriginal(p),atual=valor(p,'endereco');
- if(!orig||p.revisadoEnd===atual)return[];
+ const atual=valor(p,'endereco');
+ if(p.revisadoEnd===atual)return[];
  const m=[];
- if(!numeroDe(atual))m.push('Sem número');
- else if(numeroOriginal(p)&&numeroDe(atual)!==numeroOriginal(p))m.push('Número mudou');
- if(nomeRua(orig)&&nomeRua(atual)&&nomeRua(orig)!==nomeRua(atual))m.push('Rua mudou');
+ if(!nomeRua(atual))m.push('Sem rua');
+ const na=numeroFinal(p),no=numeroOriginal(p);
+ if(!na)m.push('Sem número');
+ else if(no&&Number(na)!==Number(no))m.push('Número mudou');
+ const ref=ruaReferencia(p),fin=nomeRua(atual);
+ if(ref&&fin&&!mesmaRua(ref,fin))m.push('Rua mudou');
  return m;
 }
+// Volta ao endereço antes da IA: rua do CEP (ou da planilha) + número da planilha
 function usarOriginal(p){
- let rua=ruaOriginal(p);const num=numeroDe(compOriginal(p));
- if(!/\d/.test(rua)&&num)rua+=' '+num;
+ const o=ruaOriginal(p),num=numeroOriginal(p);
+ let rua=p.ruaCep?(p.ruaCep+' '+(num||'S/N')):o;
+ if(!p.ruaCep&&!/\d/.test(rua)&&num)rua+=' '+num;
  p.campos.endereco=rua;
  const d=p.dados||{};if(colunas.distrito)p.campos.distrito=String(d[colunas.distrito]??'').trim();
  p.corrigidoIA=true;p.ruaPeloCep=true; // não deixa a IA nem o CEP trocarem de novo
@@ -278,11 +290,12 @@ function mostrarRevisao(lista){
   const it=document.createElement('div');it.style.cssText='border-top:1px solid #fecaca;padding:10px 0';
   const t=document.createElement('div');t.style.fontWeight='bold';t.textContent='Pacote '+(p.numeroPacote||'—')+' · '+motivosRevisao(p).join(' · ');it.appendChild(t);
   const o=document.createElement('div');o.className='small';o.style.margin='4px 0';o.textContent='📄 Planilha: '+[ruaOriginal(p),compOriginal(p)].filter(Boolean).join(', ');it.appendChild(o);
+  if(p.ruaCep){const r=document.createElement('div');r.className='small';r.style.margin='0 0 4px';r.textContent='📍 Rua pelo CEP: '+p.ruaCep;it.appendChild(r)}
   const lb=document.createElement('div');lb.className='small';lb.textContent='🚚 Vai para o Circuit (rua e número):';it.appendChild(lb);
   const inp=document.createElement('input');inp.value=valor(p,'endereco');inp.style.cssText='width:100%;margin:4px 0';
   inp.addEventListener('change',()=>{p.campos.endereco=inp.value.trim();p.corrigidoIA=true;p.ruaPeloCep=true;p.parada=null;p.parada=obterOuCriarParada(p);salvarEstado();atualizar()});
   it.appendChild(inp);
-  const b=document.createElement('button');b.className='secondary';b.textContent='↩ Usar o da planilha';
+  const b=document.createElement('button');b.className='secondary';b.textContent='↩ Voltar ao original';
   b.addEventListener('click',()=>{usarOriginal(p);inp.value=valor(p,'endereco');salvarEstado();atualizar()});
   it.appendChild(b);box.appendChild(it);
  });
