@@ -199,6 +199,7 @@ function conferir(c,origem='manual'){
  if(!p){resultado('Código não encontrado na planilha: '+c,true);$('codigo').value='';processando=false;if(origem!=='camera')$('codigo').focus();return}
  const ja=p.status==='Conferido';
  p.status='Conferido';
+ if(!ja){try{contarBipe()}catch(e){}}
  if(!p.numeroPacote)p.numeroPacote=proximoNumeroPacote();
  if(!p.parada)p.parada=obterOuCriarParada(p);
  salvarEstado();
@@ -346,4 +347,29 @@ $('backupInput').addEventListener('change',async e=>{
 });
 
 atualizar();
+
+// CONTADOR DE USO (anônimo): manda só um código do aparelho e números. Nunca endereço nem dado de cliente.
+const contarBipe=(()=>{
+ const URL_USO='https://vtkcetopwlqdegpydxyd.supabase.co/rest/v1/rpc/registrar_uso';
+ const CHAVE_USO='sb_publishable_cvWZcPa4fixBRXtvVMYRjw_JPBI0xof';
+ const VERSAO_USO='gratis';
+ let id=store.getItem('rp_aparelho');
+ if(!id){id=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('a-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10));store.setItem('rp_aparelho',id)}
+ let pendentes=Number(store.getItem('rp_bipes_pendentes'))||0;
+ function enviar(aberturas,bipados){
+  if(!aberturas&&!bipados)return Promise.resolve(true);
+  try{
+   return fetch(URL_USO,{method:'POST',keepalive:true,headers:{'Content-Type':'application/json','apikey':CHAVE_USO},body:JSON.stringify({p_aparelho:id,p_versao:VERSAO_USO,p_aberturas:aberturas,p_bipados:bipados})}).then(r=>r.ok).catch(()=>false);
+  }catch(e){return Promise.resolve(false)}
+ }
+ function enviarPendentes(){
+  if(!pendentes)return;
+  const n=Math.min(pendentes,2000);pendentes-=n;store.setItem('rp_bipes_pendentes',String(pendentes));
+  enviar(0,n).then(ok=>{if(!ok){pendentes+=n;store.setItem('rp_bipes_pendentes',String(pendentes))}});
+ }
+ enviar(1,0);enviarPendentes();
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')enviarPendentes()});
+ setInterval(enviarPendentes,5*60*1000);
+ return()=>{pendentes++;store.setItem('rp_bipes_pendentes',String(pendentes))};
+})();
 </script></body></html>
