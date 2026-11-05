@@ -372,4 +372,28 @@ const contarBipe=(()=>{
  setInterval(enviarPendentes,5*60*1000);
  return()=>{pendentes++;store.setItem('rp_bipes_pendentes',String(pendentes))};
 })();
+</script><script>
+// AVISO DA VERSÃO PRO + ENCERRAMENTO AUTOMÁTICO DA GRATUITA EM 04/12/2026.
+// Até 03/12: aviso com botão para fechar. A partir de 04/12: tela fixa, sem botão de fechar (o app para de funcionar).
+(function(){
+ const FIM=new Date(2026,11,4),WHATS='5548992104247';
+ const encerrado=new Date()>=FIM;
+ const link='https://wa.me/'+WHATS+'?text='+encodeURIComponent('Olá! Uso o Rota Paty gratuito e quero acesso ao Rota Paty Pro.');
+ const fundo=document.createElement('div');
+ fundo.style.cssText='position:fixed;inset:0;z-index:1000;background:#0f172acc;display:flex;align-items:center;justify-content:center;padding:16px';
+ fundo.innerHTML='<div style="background:#fff;max-width:440px;width:100%;border-radius:16px;padding:22px;box-shadow:0 10px 30px #0006;font-family:Arial,sans-serif;color:#172033">'+
+  '<div style="font-size:22px;font-weight:bold;margin-bottom:8px">🚀 Chegou o Rota Paty Pro</div>'+
+  (encerrado
+   ?'<p style="margin:0 0 12px;font-size:16px"><b>A versão gratuita foi encerrada em 04/12/2026.</b></p><p style="margin:0 0 14px;font-size:15px">Para continuar usando, passe para o <b>Rota Paty Pro</b>.</p>'
+   :'<p style="margin:0 0 10px;font-size:15px">A nova versão já está disponível, com mais recursos:</p>')+
+  '<ul style="margin:0 0 14px;padding-left:20px;font-size:15px;line-height:1.5"><li>💰 Controle do pagamento da semana</li><li>📍 Local da entrega salvo no GPS (geolocalização)</li><li>E outras melhorias na bipagem e no envio para o Circuit</li></ul>'+
+  (encerrado?'':'<p style="margin:0 0 14px;padding:10px;background:#fef3c7;color:#92400e;border-radius:8px;font-size:15px">⚠️ Esta versão gratuita será <b>encerrada automaticamente em 04/12/2026</b>.</p>')+
+  '<p style="margin:0 0 14px;font-size:14px;color:#475569">O Pro tem acesso pago. Fale com o proprietário no WhatsApp para liberar o seu.</p>'+
+  '<a href="'+link+'" target="_blank" rel="noopener" style="display:block;text-align:center;background:#16a34a;color:#fff;font-weight:bold;font-size:17px;padding:14px;border-radius:10px;text-decoration:none">💬 Falar no WhatsApp</a>'+
+  (encerrado?'':'<button type="button" id="avisoProFechar" style="display:block;width:100%;margin-top:10px;background:#e2e8f0;color:#334155;font-size:15px;padding:12px;border:0;border-radius:10px">Continuar na versão gratuita (até 03/12)</button>')+
+  '</div>';
+ function mostrar(){document.body.appendChild(fundo);const b=document.getElementById('avisoProFechar');if(b)b.onclick=()=>fundo.remove()}
+ if(document.body)mostrar();else document.addEventListener('DOMContentLoaded',mostrar);
+ if(encerrado){window.addEventListener('load',()=>{try{document.querySelector('main').style.display='none'}catch(e){}})}
+})();
 </script></body></html>
